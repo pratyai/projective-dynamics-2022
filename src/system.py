@@ -1,4 +1,5 @@
 import constraint as con
+import spring as spring
 import numpy as np
 import numpy.typing as npt
 import scipy.linalg as la
@@ -42,7 +43,7 @@ class System:
         The indices refer to the vertices already present in the system.
         '''
         assert q_idx != p0_idx
-        c = con.Spring(k, L, p0=lambda: self.q[p0_idx])
+        c = spring.Spring(k, L, p0=lambda: self.q[p0_idx])
         self.cons[q_idx].append(c)
 
     def f_ext(self):
