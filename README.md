@@ -26,3 +26,12 @@ The implementations of various constraints should live in `src/` (e.g. currently
 Check the class `System` in `src/system.py`.
 
 It keeps track of various constraints, asks them for the local solutions, and computes the global solution.
+
+the global solution.
+
+# TODO
+
+1. Figure out why our one dimensional test case is failing.
+2. Come up with a set of unit tests to verify our code.
+3. Create a class to streamline scene setup. Pass different scenes very quickly to try out different simulation scenarios.
+4. Add some sort of method to the System class that ouputs "debug primitives" to pass to Polyscope.
