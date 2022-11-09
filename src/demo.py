@@ -29,6 +29,7 @@ def three_point_system():
     ax = fig.add_subplot(projection='3d')
     ax.set_xlim3d(-3, 3)
     ax.set_ylim3d(-3, 3)
+    ax.set_zlim3d(-3, 3)
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
