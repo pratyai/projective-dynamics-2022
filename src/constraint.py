@@ -4,6 +4,7 @@ The actual solvers may need more efficient data structures and solutions.
 '''
 
 import numpy.typing as npt
+from numpy import array, identity
 
 
 class Constraint:
@@ -15,15 +16,13 @@ class Constraint:
     # dimensions of the geometric space
     D = 3
 
-    def wAA(self):
-        '''
-        Return w_i * A_i' * A_i for this constraint, excluding the selection term S_i.
-        '''
-        raise RuntimeError('Constraint.wAA() unimplemented')
+    def __init__(self, w: float = 1.0, A: array = identity(D), B: array = identity(D)):
+        self.w = w
+        self.A = A
+        self.B = B
 
-    def wABp(self, q: npt.NDArray):
+    def project(self, q: npt.NDArray):
         '''
-        Return w_i * A_i' * B_i * p for this constraing, excluding the selection term S_i.
-        q = a single point we want to project on this constraint.
+        "Project" a single point q on the constraint.
         '''
-        raise RuntimeError('Constraint.wABp() unimplemented')
+        raise RuntimeError('Constraint.project() unimplemented')

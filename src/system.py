@@ -59,15 +59,15 @@ class System:
         Return the new q and q1 after a step of size h.
         h = step size
         '''
-        # NOTE: All the local solutions happen inside `c.wABp()`.
+        # NOTE: All the local solutions happen inside `c.project()`.
 
         # All the selection matrices were ignored using the block-diagonal constructions.
         # We know that constraints are not shared between vertices in our current model.
-        wABp = [np.sum([c.wABp(self.q[i]) for c in self.cons[i]], axis=0) if self.cons[i] else np.zeros(System.D)
+        wABp = [np.sum([c.w * c.A.T @ c.B @ c.project(self.q[i]) for c in self.cons[i]], axis=0) if self.cons[i] else np.zeros(System.D)
                 for i in range(self.n)]
         wABp = np.concatenate(wABp)
 
-        wAA = [np.sum([c.wAA() for c in self.cons[i]], axis=0) if self.cons[i] else np.zeros((System.D, System.D))
+        wAA = [np.sum([c.A.T @ c.A for c in self.cons[i]], axis=0) if self.cons[i] else np.zeros((System.D, System.D))
                for i in range(self.n)]
         wAA = la.block_diag(*wAA)
 
