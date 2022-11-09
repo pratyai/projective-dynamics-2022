@@ -49,10 +49,32 @@ class System:
     def f_ext(self):
         '''
         Returns external forces applied to each vertex from outside the system.
+        TODO: forces need to be parameterized instead of hardcoded.
         '''
         gravity_force = np.array([np.array([0, 0, -0.1])] * self.q.shape[0])
         damping_force = -0.5*self.q1
-        return gravity_force + damping_force
+        return gravity_force
+
+    def wAtA(self):
+        wAtA = [
+            np.sum([c.w * c.A.T @ c.A for c in self.cons[i]], axis=0)
+            if self.cons[i] else np.zeros((System.D, System.D))
+            for i in range(self.n)
+        ]
+        # a giant matrix for all the points arranged in a block diagonal fashion,
+        # since the different points' computations are independent (unless it
+        # goes through a constraint).
+        return la.block_diag(*wAtA)
+
+    def wAtBp(self):
+        wAtBp = [
+            np.sum([c.w * c.A.T @ c.B @ c.project(self.q[i])
+                   for c in self.cons[i]], axis=0)
+            if self.cons[i] else np.zeros(System.D)
+            for i in range(self.n)
+        ]
+        # a giant stack of all the points' column vectors.
+        return np.array(wAtBp)
 
     def solve(self, h: float):
         '''
@@ -63,22 +85,19 @@ class System:
 
         # All the selection matrices were ignored using the block-diagonal constructions.
         # We know that constraints are not shared between vertices in our current model.
-        wABp = [np.sum([c.w * c.A.T @ c.B @ c.project(self.q[i]) for c in self.cons[i]], axis=0) if self.cons[i] else np.zeros(System.D)
-                for i in range(self.n)]
-        wABp = np.concatenate(wABp)
-
-        wAA = [np.sum([c.A.T @ c.A for c in self.cons[i]], axis=0) if self.cons[i] else np.zeros((System.D, System.D))
-               for i in range(self.n)]
-        wAA = la.block_diag(*wAA)
+        wAtA = self.wAtA()
+        wAtBp = self.wAtBp()
 
         M_h2 = self.M / (h*h)
-        s = self.q.reshape(-1) + h * self.q1.reshape(-1) + \
-            la.inv(M_h2) @ self.f_ext().reshape(-1)
+        s = self.q + h * self.q1 + \
+            (la.inv(M_h2) @ self.f_ext().reshape(-1)).reshape(self.q.shape)
 
-        q = la.solve(M_h2 + wAA, M_h2 @ s + wABp).reshape(self.q.shape)
+        lhs = M_h2 + wAtA
+        rhs = M_h2 @ s.reshape(-1) + wAtBp.reshape(-1)
+
+        q = la.solve(lhs, rhs).reshape(self.q.shape)
         # pin these vertices
-        for v in self.pinned:
-            q[v, :] = self.q[v, :]
+        q[list(self.pinned), :] = self.q[list(self.pinned), :]
         q1 = (q - self.q) / h
         return (q, q1)
 
