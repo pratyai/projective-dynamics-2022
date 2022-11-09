@@ -13,21 +13,16 @@ If the python implementation turns out to be poor even with reasonable optimizat
 ### Constraints
 Check the class `Constraint` in `src/constraint.py` for the interface and derivations of it for the various implementations.
 
-While constraints are to yield the projections of the input point on some geometric manifold, in practice we don't necessarily need the points themselves to use in the global solver. It is sufficient to get the values of
+Constraints are to yield the projections of the input point on some geometric manifold. So, the `Constraint` interface offers only a `project()` method to compute that projected point. Additionally it offers the per-constraint parameters `w`, `A`, and `B`.
 
-* $wA^TA$ (which depends on the constraint's type and parameters, but *not* the point to be projected)
-* $wA^TBp$ (which depends on the constraint's type and parameters, but *also* the projected point, which might be a non-linear mapping of the point to be projected)
-
-for each constraint. Which is why the `Constraint` interface class offers only those to methods.
-
-The implementations of various constraints should live in `src/` (e.g. currently `src/spring.py` is there). In principle, constraints *should not* be aware of the global state of the system.
+The implementations of various constraints should live in `src/` (e.g. currently `src/spring.py` is there). In principle, constraints *should not* be aware of the global state of the system, although they can accept callables that can yield information that is only available in the global state (e.g. for spring constraint, the position of the other end of the spring is another vertex on the system).
 
 ### System
 Check the class `System` in `src/system.py`.
 
 It keeps track of various constraints, asks them for the local solutions, and computes the global solution.
 
-the global solution.
+---
 
 # TODO
 
