@@ -18,6 +18,7 @@ class Spring(con.Constraint):
         '''
         super(Spring, self).__init__(**kwargs)
         self.k = k
+        self.w *= k
         self.L = L
         self.p0 = p0
 
