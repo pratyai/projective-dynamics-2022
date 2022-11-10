@@ -26,11 +26,12 @@ class Spring(con.Constraint):
         '''
         "Project" a single point q on the constraint.
         '''
-        d = q - self.p0()
+        p0, p0_idx = self.p0()
+        d = q - p0
         if la.norm(d) < EPS:
             raise RuntimeError('undefined [spring is too compressed]')
         u = d / la.norm(d)
-        return self.p0() + u * self.L
+        return p0 + u * self.L
 
     def p0(self):
         '''
