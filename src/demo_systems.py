@@ -43,27 +43,22 @@ def make_a_grid_system():
     m = np.ones(q.shape[0]) * M / (N*N)
     s = msys.System(q=q, q1=None, M=np.kron(
         np.diagflat(m), np.identity(msys.System.D)))
+
+    def vtxid(i, j): return i*N+j
+
+    def neighbors(i, j): return [
+        (i-1, j), (i, j-1), (i+1, j), (i, j+1),
+        (i-1, j-1), (i+1, j+1), (i-1, j+1), (i+1, j-1)]
     # add the constraints by the grid lines
     for i in range(N):
         for j in range(N):
-            if i == 0 and j == 0:
-                # s.pinned.add(i*N+j)
-                continue
-            elif i == N-1 and j == N-1:
-                s.pinned.add(i*N+j)
-                continue
-            elif i == 0 and j == N-1:
-                s.pinned.add(i*N+j)
-                continue
-            elif i == N-1 and j == 0:
-                s.pinned.add(i*N+j)
-                continue
-            if i+1 < N:
-                s.add_spring(k=1, L=L/(N-1), q_idx=i*N+j, p0_idx=(i+1)*N+j)
-            if i-1 >= 0:
-                s.add_spring(k=1, L=L/(N-1), q_idx=i*N+j, p0_idx=(i-1)*N+j)
-            if j+1 < N:
-                s.add_spring(k=1, L=L/(N-1), q_idx=i*N+j, p0_idx=i*N+j+1)
-            if j-1 >= 0:
-                s.add_spring(k=1, L=L/(N-1), q_idx=i*N+j, p0_idx=i*N+j-1)
+            for (ni, nj) in neighbors(i, j):
+                if not (ni >= 0 and ni < N and nj >= 0 and nj < N):
+                    # out of bounds
+                    continue
+                s.add_spring(k=1, L=L/(N-1), q_idx=vtxid(i, j),
+                             p0_idx=vtxid(ni, nj))
+    s.pinned.add(vtxid(N-1, N-1))
+    s.pinned.add(vtxid(N-1, 0))
+    s.pinned.add(vtxid(0, N-1))
     return s

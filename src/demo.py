@@ -43,5 +43,5 @@ def play_system(s):
 
 
 if __name__ == '__main__':
-    s = demos.make_a_two_point_system()
+    s = demos.make_a_grid_system()
     play_system(s)
