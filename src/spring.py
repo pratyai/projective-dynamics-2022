@@ -2,8 +2,7 @@ import constraint as con
 import numpy as np
 import numpy.typing as npt
 import numpy.linalg as la
-
-EPS = 1e-6
+import constants as const
 
 
 class Spring(con.Constraint):
@@ -28,7 +27,7 @@ class Spring(con.Constraint):
         '''
         p0, p0_idx = self.p0()
         d = q - p0
-        if la.norm(d) < EPS:
+        if la.norm(d) < const.EPS:
             raise RuntimeError('undefined [spring is too compressed]')
         u = d / la.norm(d)
         return p0 + u * self.L

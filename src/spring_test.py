@@ -2,7 +2,7 @@ import unittest
 import spring
 import numpy as np
 import numpy.linalg as la
-import constraint as con
+import constants as const
 
 
 class TestProjection(unittest.TestCase):
@@ -83,13 +83,13 @@ class TestParamters(unittest.TestCase):
         np.testing.assert_almost_equal(c.w, k)
         np.testing.assert_almost_equal(c.L, L)
         np.testing.assert_array_almost_equal(
-            c.A, np.identity(con.Constraint.D))
+            c.A, np.identity(const.D))
         np.testing.assert_array_almost_equal(
-            c.B, np.identity(con.Constraint.D))
+            c.B, np.identity(const.D))
 
         w = 0.9
-        A = np.identity(con.Constraint.D) * 10
-        B = np.identity(con.Constraint.D) * 20
+        A = np.identity(const.D) * 10
+        B = np.identity(const.D) * 20
         c = spring.Spring(k=k, L=L, p0=lambda: (p0, None), w=w, A=A, B=B)
         np.testing.assert_almost_equal(c.w, k * w)
         np.testing.assert_almost_equal(c.L, L)

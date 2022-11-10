@@ -4,7 +4,8 @@ The actual solvers may need more efficient data structures and solutions.
 '''
 
 import numpy.typing as npt
-from numpy import array, identity
+import numpy as np
+import constants as const
 
 
 class Constraint:
@@ -13,10 +14,10 @@ class Constraint:
     implement this interface.
     '''
 
-    # dimensions of the geometric space
-    D = 3
-
-    def __init__(self, w: float = 1.0, A: array = identity(D), B: array = identity(D)):
+    def __init__(self,
+                 w: float = 1.0,
+                 A: npt.NDArray = np.identity(const.D),
+                 B: npt.NDArray = np.identity(const.D)):
         self.w = w
         self.A = A
         self.B = B
