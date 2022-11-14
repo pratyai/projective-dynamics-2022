@@ -1,11 +1,20 @@
-import constraint as con
+import sys
+import os
+
+# Add path of current package (not any higher level in the hierarchy) so as to allow this module to access the "constraints" module.
+# SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+# sys.path.append(os.path.dirname(SCRIPT_DIR))
+
+
+# from demos import demo2
+from .constraint import Constraint
 import numpy as np
 import numpy.typing as npt
 import numpy.linalg as la
 import constants as const
 
 
-class Spring(con.Constraint):
+class Spring(Constraint):
     def __init__(self, k: float, L: float, p0: callable, **kwargs):
         '''
         Spring constant that always wants to move a 3d point to a resting location,
@@ -38,7 +47,7 @@ class Spring(con.Constraint):
         Since the other end is not necessarily fixed, and will typically refer
         to the current poision of another vertex, this function needs to be constructed dynamically.
         '''
-        raise RuntimeError('Spring.p0() unimplemented')
+        raise NotImplementedError('Spring.p0() unimplemented')
 
 
 if __name__ == '__main__':
