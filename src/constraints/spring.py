@@ -46,8 +46,8 @@ class Spring(Constraint):
         Constraint energy of a single point q.
         '''
         p = self.project(q)
-        d = q - p
-        return 0.5 * self.k * d.T @ d
+        d = self.A @ q - self.B @ p
+        return 0.5 * self.w * d.T @ d
 
     def p0(self):
         '''
