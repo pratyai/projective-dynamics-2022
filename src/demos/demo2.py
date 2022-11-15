@@ -2,7 +2,7 @@ import numpy as np
 import polyscope as ps
 import polyscope.imgui as psim
 import system as msys
-import demo_systems as demos
+from . import demo_systems as demos
 
 
 def ui_callback(state: dict, system):

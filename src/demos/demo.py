@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as mani
 import system as msys
-import demo_systems as demos
+from . import demo_systems as demos
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
 
 
