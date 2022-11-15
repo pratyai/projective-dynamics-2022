@@ -26,4 +26,4 @@ class Constraint:
         '''
         "Project" a single point q on the constraint.
         '''
-        raise RuntimeError('Constraint.project() unimplemented')
+        raise NotImplementedError('Constraint.project() unimplemented')

@@ -1,5 +1,5 @@
 import unittest
-import spring
+from constraints.spring import Spring
 import numpy as np
 import numpy.linalg as la
 import constants as const
@@ -10,7 +10,7 @@ class TestProjection(unittest.TestCase):
         p0 = np.array([0, 0, 0])
         q = np.array([0.5, 0, 0])
         want_p = np.array([1, 0, 0])
-        c = spring.Spring(k=1, L=1, p0=lambda: (p0, None))
+        c = Spring(k=1, L=1, p0=lambda: (p0, None))
 
         np.testing.assert_array_almost_equal(
             c.project(q), want_p)
@@ -19,7 +19,7 @@ class TestProjection(unittest.TestCase):
         p0 = np.array([0, 0, 0])
         q = np.array([1.5, 0, 0])
         want_p = np.array([1, 0, 0])
-        c = spring.Spring(k=1, L=1, p0=lambda: (p0, None))
+        c = Spring(k=1, L=1, p0=lambda: (p0, None))
 
         np.testing.assert_array_almost_equal(
             c.project(q), want_p)
@@ -28,7 +28,7 @@ class TestProjection(unittest.TestCase):
         p0 = np.array([0, 0, 0])
         q = np.array([1, 0, 0])
         want_p = np.array([1, 0, 0])
-        c = spring.Spring(k=1, L=1, p0=lambda: (p0, None))
+        c = Spring(k=1, L=1, p0=lambda: (p0, None))
 
         np.testing.assert_array_almost_equal(
             c.project(q), want_p)
@@ -37,7 +37,7 @@ class TestProjection(unittest.TestCase):
         p0 = np.array([0, 0, 0])
         p0_lst = [np.copy(p0)]
         q = np.array([1, 0, 0])
-        c = spring.Spring(k=1, L=1, p0=lambda: (p0_lst[0], 0))
+        c = Spring(k=1, L=1, p0=lambda: (p0_lst[0], 0))
 
         want_p = np.array([1, 0, 0])
         np.testing.assert_array_almost_equal(
@@ -60,7 +60,7 @@ class TestProjection(unittest.TestCase):
         q = np.array([1.5, 1.5, 1.5])
         want_p = np.array([1, 1, 1])
         L = np.sqrt(3)
-        c = spring.Spring(k=1, L=L, p0=lambda: (p0, None))
+        c = Spring(k=1, L=L, p0=lambda: (p0, None))
         np.testing.assert_array_almost_equal(
             c.project(q), want_p)
         np.testing.assert_almost_equal(
@@ -79,7 +79,7 @@ class TestParamters(unittest.TestCase):
         k = 0.7
         L = 0.4
 
-        c = spring.Spring(k=k, L=L, p0=lambda: (p0, None))
+        c = Spring(k=k, L=L, p0=lambda: (p0, None))
         np.testing.assert_almost_equal(c.w, k)
         np.testing.assert_almost_equal(c.L, L)
         np.testing.assert_array_almost_equal(
@@ -90,7 +90,7 @@ class TestParamters(unittest.TestCase):
         w = 0.9
         A = np.identity(const.D) * 10
         B = np.identity(const.D) * 20
-        c = spring.Spring(k=k, L=L, p0=lambda: (p0, None), w=w, A=A, B=B)
+        c = Spring(k=k, L=L, p0=lambda: (p0, None), w=w, A=A, B=B)
         np.testing.assert_almost_equal(c.w, k * w)
         np.testing.assert_almost_equal(c.L, L)
         np.testing.assert_array_almost_equal(c.A, A)
