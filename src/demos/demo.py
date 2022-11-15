@@ -7,7 +7,7 @@ from mpl_toolkits.mplot3d.art3d import Line3DCollection
 
 
 def updater(f, g, s, h, dt):
-    for _ in range(int(np.ceil(dt/h))):
+    for _ in range(int(np.ceil(dt / h))):
         s.step(h)
     g._offsets3d = (s.q[:, 0], s.q[:, 1], s.q[:, 2])
 
@@ -22,7 +22,7 @@ def play_system(s):
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
 
-    g = ax.scatter(s.q[:, 0], s.q[:, 1], s.q[:, 2], s=5*np.diag(s.M)[::3])
+    g = ax.scatter(s.q[:, 0], s.q[:, 1], s.q[:, 2], s=5 * np.diag(s.M)[::3])
 
     def comp_line_segs(): return np.array([[q, c.p0()[0]]
                                            for (q, cs) in zip(s.q, s.cons)
@@ -33,10 +33,10 @@ def play_system(s):
 
     h = 0.01
     fps = 30
-    ival = int(np.floor(1000/fps))
+    ival = int(np.floor(1000 / fps))
 
     def cb(f):
-        updater(f, g, s, h, ival/1000)
+        updater(f, g, s, h, ival / 1000)
         ls[:] = comp_line_segs()[:]
     ani = mani.FuncAnimation(fig, cb, interval=ival)
     plt.show()

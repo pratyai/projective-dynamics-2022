@@ -37,18 +37,18 @@ def make_a_grid_system():
     # create the points
     L = 4
     M = 1
-    x, y, z = np.meshgrid(np.linspace(-L/2, L/2, num=N),
-                          np.linspace(-L/2, L/2, num=N), [0])
+    x, y, z = np.meshgrid(np.linspace(-L / 2, L / 2, num=N),
+                          np.linspace(-L / 2, L / 2, num=N), [0])
     q = np.vstack((x.reshape(-1), y.reshape(-1), z.reshape(-1))).T
-    m = np.ones(q.shape[0]) * M / (N*N)
+    m = np.ones(q.shape[0]) * M / (N * N)
     s = msys.System(q=q, q1=None, M=np.kron(
         np.diagflat(m), np.identity(msys.System.D)))
 
-    def vtxid(i, j): return i*N+j
+    def vtxid(i, j): return i * N + j
 
     def neighbors(i, j): return [
-        (i-1, j), (i, j-1), (i+1, j), (i, j+1),
-        (i-1, j-1), (i+1, j+1), (i-1, j+1), (i+1, j-1)]
+        (i - 1, j), (i, j - 1), (i + 1, j), (i, j + 1),
+        (i - 1, j - 1), (i + 1, j + 1), (i - 1, j + 1), (i + 1, j - 1)]
     # add the constraints by the grid lines
     for i in range(N):
         for j in range(N):
@@ -56,9 +56,9 @@ def make_a_grid_system():
                 if not (ni >= 0 and ni < N and nj >= 0 and nj < N):
                     # out of bounds
                     continue
-                s.add_spring(k=1, L=L/(N-1), q_idx=vtxid(i, j),
+                s.add_spring(k=1, L=L / (N - 1), q_idx=vtxid(i, j),
                              p0_idx=vtxid(ni, nj))
-    s.pinned.add(vtxid(N-1, N-1))
-    s.pinned.add(vtxid(N-1, 0))
-    s.pinned.add(vtxid(0, N-1))
+    s.pinned.add(vtxid(N - 1, N - 1))
+    s.pinned.add(vtxid(N - 1, 0))
+    s.pinned.add(vtxid(0, N - 1))
     return s

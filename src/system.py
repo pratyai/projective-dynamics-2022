@@ -52,7 +52,7 @@ class System:
         TODO: forces need to be parameterized instead of hardcoded.
         '''
         gravity_force = np.array([np.array([0, 0, -0.1])] * self.q.shape[0])
-        damping_force = -0.5*self.q1
+        damping_force = -0.5 * self.q1
         return gravity_force
 
     def wAtA(self):
@@ -69,7 +69,7 @@ class System:
     def wAtBp(self):
         wAtBp = [
             np.sum([c.w * c.A.T @ c.B @ c.project(self.q[i])
-                   for c in self.cons[i]], axis=0)
+                    for c in self.cons[i]], axis=0)
             if self.cons[i] else np.zeros(const.D)
             for i in range(self.n)
         ]
@@ -84,11 +84,12 @@ class System:
         # NOTE: All the local solutions happen inside `c.project()`.
 
         # All the selection matrices were ignored using the block-diagonal constructions.
-        # We know that constraints are not shared between vertices in our current model.
+        # We know that constraints are not shared between vertices in our
+        # current model.
         wAtA = self.wAtA()
         wAtBp = self.wAtBp()
 
-        M_h2 = self.M / (h*h)
+        M_h2 = self.M / (h * h)
         s = self.q + h * self.q1 + \
             (la.inv(M_h2) @ self.f_ext().reshape(-1)).reshape(self.q.shape)
 
