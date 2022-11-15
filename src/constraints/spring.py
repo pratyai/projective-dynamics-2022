@@ -41,6 +41,14 @@ class Spring(Constraint):
         u = d / la.norm(d)
         return p0 + u * self.L
 
+    def energy(self, q: npt.NDArray):
+        '''
+        Constraint energy of a single point q.
+        '''
+        p = self.project(q)
+        d = la.norm(q-p)
+        return 0.5 * self.k * d * d
+
     def p0(self):
         '''
         Find the other end of the spring.

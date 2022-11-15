@@ -46,6 +46,16 @@ class System:
         c = Spring(k, L, p0=lambda: (self.q[p0_idx], p0_idx))
         self.cons[q_idx].append(c)
 
+    def energy(self):
+        '''
+        Net energy of the system.
+        '''
+        constraint_energy = np.sum([c.energy(self.q[i]) for i in range(self.n)
+                                    for c in self.cons[i]])
+        q1 = self.q1.reshape(-1)
+        kinetic_energy = 0.5 * q1.T @ self.M @ q1
+        return kinetic_energy + constraint_energy
+
     def f_ext(self):
         '''
         Returns external forces applied to each vertex from outside the system.

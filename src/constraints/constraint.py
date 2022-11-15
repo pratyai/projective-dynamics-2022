@@ -27,3 +27,9 @@ class Constraint:
         "Project" a single point q on the constraint.
         '''
         raise NotImplementedError('Constraint.project() unimplemented')
+
+    def energy(sefl, q: npt.NDArray):
+        '''
+        Constraint energy of a single point q.
+        '''
+        raise NotImplementedError('Constraint.energy() unimplemented')
