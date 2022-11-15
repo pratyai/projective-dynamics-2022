@@ -66,13 +66,13 @@ def make_a_grid_system():
     return s
 
 
-def make_triangle_mesh_system(filename):
+def make_triangle_mesh_system(filename: str, point_mass: float, spring_stiffnes: float):
     # Read the mesh from a the file
     mesh = om.read_trimesh(filename)
     
     q = mesh.points() # The Vx3 configuration matrix
     V = mesh.points().shape[0] # V
-    m = np.ones(q.shape[0]) / V # Vx1 mass per point matrix
+    m = np.ones(q.shape[0]) / V * point_mass # Vx1 mass per point matrix
     M = np.kron(np.diagflat(m), np.identity(msys.System.D)) # VxV mass matrix
                 
     # Create our system
@@ -85,7 +85,7 @@ def make_triangle_mesh_system(filename):
         v = mesh.points()[j] # Target vertex
         
         # Spring parameters
-        k = 1 # Spring stiffness
+        k = spring_stiffnes # Spring stiffness
         L = np.linalg.norm(v - u) # Spring length
         
         # Add our spring
