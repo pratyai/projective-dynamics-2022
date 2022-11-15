@@ -3,6 +3,12 @@
 ## References
 * http://www.projectivedynamics.org
 
+## How to run
+
+1. `cd` to `src/`.
+1. If you want the `matplotlib` UI, then run `python3 -m demos.demo`.
+1. If you want the `polyscope` UI, then run `python3 -m demos.demo2`.
+
 ## API guideline
 
 ### General
