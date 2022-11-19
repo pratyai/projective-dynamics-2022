@@ -54,7 +54,10 @@ class System:
                                     for c in self.cons[i]])
         q1 = self.q1.reshape(-1)
         kinetic_energy = 0.5 * q1.T @ self.M @ q1
-        return kinetic_energy + constraint_energy
+        return {
+            'kinetic': kinetic_energy,
+            'constraint': constraint_energy,
+            'total': kinetic_energy + constraint_energy}
 
     def f_ext(self):
         '''

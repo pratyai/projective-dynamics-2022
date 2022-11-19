@@ -26,15 +26,12 @@ def updater(f, g, s, h, dt):
 def play_system(s, save=None, nframes=900):
     fig = plt.figure(figsize=(6, 8))
     gs = GridSpec(2, 1, width_ratios=[1], height_ratios=[1, 3])
-    ax = fig.add_subplot(projection='3d')
-    ax.set_xlim3d(-3, 3)
-    ax.set_ylim3d(-3, 3)
-    ax.set_zlim3d(-3, 3)
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
 
     plotax = fig.add_subplot(gs[0, 0])
+    plotax.set_xlim(-3, 3)
+    plotax.set_ylim(-3, 3)
+    plotax.set_xlabel('X')
+    plotax.set_ylabel('Y')
 
     simax = fig.add_subplot(gs[1, 0], projection='3d')
     simax.set_xlim3d(-3, 3)
@@ -61,13 +58,17 @@ def play_system(s, save=None, nframes=900):
         ls[:] = comp_line_segs()[:]
 
     frames = []
-    energies = []
+    energies = {}
 
     def plotcb(f):
         frames.append(f)
-        energies.append(s.energy())
+        for (k, v) in s.energy().items():
+            if k not in energies:
+                energies[k] = []
+            energies[k].append(v)
         plotax.clear()
-        plotax.plot(frames, energies, label='energy', linewidth=1)
+        for (k, v) in energies.items():
+            plotax.plot(frames, v, label=k, linewidth=1)
         plotax.legend(fontsize='xx-small', loc='lower center', ncol=1)
 
     def cb(f):
