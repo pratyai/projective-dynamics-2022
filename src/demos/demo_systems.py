@@ -31,7 +31,7 @@ def make_a_three_point_system():
     return s
 
 
-def make_a_grid_system():
+def make_a_grid_system(diagtype=0):
     # a grid system with N * N points.
     N = 10
     # create the points
@@ -46,9 +46,14 @@ def make_a_grid_system():
 
     def vtxid(i, j): return i * N + j
 
-    def neighbors(i, j): return [
+    def neighbors_1(i, j): return [
         (i - 1, j), (i, j - 1), (i + 1, j), (i, j + 1),
-        (i - 1, j - 1), (i + 1, j + 1), (i - 1, j + 1), (i + 1, j - 1)]
+        (i - 1, j - 1), (i + 1, j + 1)]
+
+    def neighbors_0(i, j): return [
+        (i - 1, j), (i, j - 1), (i + 1, j), (i, j + 1),
+        (i - 1, j + 1), (i + 1, j - 1)]
+    neighbors = neighbors_1 if diagtype == 1 else neighbors_0
     # add the constraints by the grid lines
     for i in range(N):
         for j in range(N):
