@@ -3,6 +3,7 @@ import polyscope as ps
 import polyscope.imgui as psim
 import system as msys
 from . import demo_systems as demos
+import sys
 
 
 def ui_callback(state: dict, system):
@@ -14,6 +15,8 @@ def ui_callback(state: dict, system):
         state['ui_is_running'] = not state['ui_is_running']
     changed, state['ui_h'] = psim.SliderFloat(
         "Step size", state['ui_h'], v_min=0.001, v_max=1.0)
+    changed, state['ui_steps_per_frame'] = psim.InputInt(
+        "ui_int", state['ui_steps_per_frame'], step=1, step_fast=10)
     if 'ps_mesh' not in state:
         def comp_line_segs(): return np.array([[qi, c.p0()[1]]
                                                for (qi, (q, cs)) in enumerate(zip(system.q, system.cons))
@@ -22,7 +25,8 @@ def ui_callback(state: dict, system):
         state['ps_mesh'] = ps.register_curve_network(
             name='ps_mesh', nodes=system.q, edges=comp_line_segs())
     if state['ui_is_running']:
-        system.step(state['ui_h'])
+        for i in range(state['ui_steps_per_frame']):
+            system.step(state['ui_h'])
         state['ps_mesh'].update_node_positions(system.q)
 
 
@@ -40,6 +44,7 @@ def main(s: msys.System):
     state = {
         'ui_is_running': False,
         'ui_h': 0.01,
+        'ui_steps_per_frame': 10
     }
     ps.set_user_callback(lambda: ui_callback(state, s))
 
@@ -48,5 +53,12 @@ def main(s: msys.System):
 
 
 if __name__ == '__main__':
-    s = demos.make_a_grid_system()
+    # Simple command line argument handling
+    if (len(sys.argv) != 2):
+        print("Usage: python demo3.py mesh.obj")
+        exit()
+
+    # Create a system fom our triangle mesh
+    filename = sys.argv[1]
+    s = demos.make_triangle_mesh_system(filename, 1, 10)
     main(s)

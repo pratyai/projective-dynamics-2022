@@ -1,4 +1,6 @@
 import numpy as np
+import openmesh as om
+
 import system as msys
 
 
@@ -61,4 +63,39 @@ def make_a_grid_system():
     s.pinned.add(vtxid(N - 1, N - 1))
     s.pinned.add(vtxid(N - 1, 0))
     s.pinned.add(vtxid(0, N - 1))
+    return s
+
+
+def make_triangle_mesh_system(
+        filename: str,
+        point_mass: float,
+        spring_stiffnes: float):
+    # Read the mesh from a the file
+    mesh = om.read_trimesh(filename)
+
+    q = mesh.points()  # The Vx3 configuration matrix
+    V = mesh.points().shape[0]  # V
+    m = np.ones(q.shape[0]) / V * point_mass  # Vx1 mass per point matrix
+    M = np.kron(np.diagflat(m), np.identity(msys.System.D))  # VxV mass matrix
+
+    # Create our system
+    s = msys.System(q=q, q1=None, M=M)
+
+    # Add a spring for each edge
+    for [i, j] in mesh.edge_vertex_indices():
+        # Edge information
+        u = mesh.points()[i]  # Source vertex
+        v = mesh.points()[j]  # Target vertex
+
+        # Spring parameters
+        k = spring_stiffnes  # Spring stiffness
+        L = np.linalg.norm(v - u)  # Spring length
+
+        # Add our spring
+        s.add_spring(k=k, L=L, q_idx=i, p0_idx=j)
+
+    # Manually pin the first vertex
+    s.pinned.add(0)
+
+    # Return the system
     return s
