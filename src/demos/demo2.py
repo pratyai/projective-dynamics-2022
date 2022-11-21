@@ -44,7 +44,7 @@ def main(s: msys.System):
     state = {
         'ui_is_running': False,
         'ui_h': 0.01,
-        'ui_steps_per_frame' : 10
+        'ui_steps_per_frame': 10
     }
     ps.set_user_callback(lambda: ui_callback(state, s))
 
@@ -57,7 +57,7 @@ if __name__ == '__main__':
     if (len(sys.argv) != 2):
         print("Usage: python demo3.py mesh.obj")
         exit()
-    
+
     # Create a system fom our triangle mesh
     filename = sys.argv[1]
     s = demos.make_triangle_mesh_system(filename, 1, 10)
