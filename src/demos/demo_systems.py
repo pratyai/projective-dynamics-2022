@@ -89,11 +89,9 @@ def make_a_grid_system(
 
 
 def make_triangle_mesh_system(
-        filename: str,
+        mesh: None,
         point_mass: float,
-        spring_stiffnes: float):
-    # Read the mesh from a the file
-    mesh = om.read_trimesh(filename)
+        spring_stiffness: float):
 
     q = mesh.points()  # The Vx3 configuration matrix
     V = mesh.points().shape[0]  # V
@@ -110,15 +108,12 @@ def make_triangle_mesh_system(
         v = mesh.points()[j]  # Target vertex
 
         # Spring parameters
-        k = spring_stiffnes  # Spring stiffness
+        k = spring_stiffness  # Spring stiffness
         L = np.linalg.norm(v - u)  # Spring length
 
-        # Add our spring
+        # Add springs between every two edges
         s.add_spring(k=k, L=L, q_idx=i, p0_idx=j)
         s.add_spring(k=k, L=L, q_idx=j, p0_idx=i)
-
-    # Manually pin the first vertex
-    s.pinned.add(0)
 
     # Return the system
     return s
