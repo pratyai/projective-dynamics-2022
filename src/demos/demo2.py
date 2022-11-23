@@ -141,7 +141,7 @@ def main(filename: str):
 
     # Set up our scene
     ps.set_up_dir('z_up')
-    ps.set_ground_plane_mode('none')
+    ps.set_ground_plane_height_factor(1)
 
     '''
     `state` is a dictionary representing the application state.
