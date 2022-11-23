@@ -201,4 +201,5 @@ if __name__ == '__main__':
     # Pass the filename to our main function
     main(args.filename)
     subprocess.run(
-        f"mkdir -p ../demos/ &&ffmpeg -y -framerate 30 -pattern_type glob -i 'screenshot_*.png' -c:v libx264 -pix_fmt yuv420p ../demos/{os.path.basename(filename)}.mp4 && rm screenshot_*.png", shell=True)
+        f"mkdir -p ../demos/ &&ffmpeg -y -framerate 30 -pattern_type glob -i 'screenshot_*.png' -c:v libx264 -pix_fmt yuv420p ../demos/{os.path.basename(filename)}.mp4 && rm screenshot_*.png",
+        shell=True)
