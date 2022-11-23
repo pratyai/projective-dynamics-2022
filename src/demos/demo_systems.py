@@ -3,10 +3,10 @@ import numpy.typing as npt
 import constants as con
 
 
-import openmesh as om
+#import openmesh as om
 
 import system as msys
-from enum import Enum
+from enum import Enum, auto
 
 
 def make_a_two_point_system():
@@ -36,6 +36,13 @@ def make_a_three_point_system():
     # the heavy one will be pinned at origin.
     s.pinned.add(0)
     # the light ones will be tied to the other two with springs.
+    # id0 -- id1
+    #     \      \
+    #        \     \ 
+    #           \    \
+    #             \   \
+    #               id2
+    # No force is applied on the particle with id = 0 (a.k.a. it is fixed).
     s.add_spring(k=1, L=1, q_idx=1, p0_idx=0)
     s.add_spring(k=1, L=1, q_idx=1, p0_idx=2)
     s.add_spring(k=1, L=1, q_idx=2, p0_idx=0)
@@ -44,8 +51,8 @@ def make_a_three_point_system():
 
 
 class GridDiagonalDirection(Enum):
-    TOPLEFT = 1
-    TOPRIGHT = 2
+    TOPLEFT = auto()
+    TOPRIGHT = auto()
 
 
 def make_a_grid_system(
@@ -65,24 +72,22 @@ def make_a_grid_system(
 
     def vtxid(i, j): return i * N + j
 
-    def axis_aligned_neighbors(i, j): return [(
-        i - 1, j), (i, j - 1), (i + 1, j), (i, j + 1)]
+    def axis_aligned_neighbors(i, j): 
+        # Return: Up, left, down, right #? Is the convention "i+1 = i + one down" and "j+1 = j + one on the right" correct? The same question applies for the functions below.
+        return [(i - 1, j), (i, j - 1), (i + 1, j), (i, j + 1)]
 
-    def topleft_diagonal_neighbors(i, j): return [
-        (i - 1, j - 1), (i + 1, j + 1)]
+    def topleft_diagonal_neighbors(i, j):
+        # Return: diagonal up-left, diagonal down-right
+        return [(i - 1, j - 1), (i + 1, j + 1)]
 
-    def topright_diagonal_neighbors(i, j): return [
-        (i - 1, j + 1), (i + 1, j - 1)]
+    def topright_diagonal_neighbors(i, j):
+        # Return: diagonal up-right, diagonal down-left
+        return [(i - 1, j + 1), (i + 1, j - 1)]
 
     def neighbors(i, j):
-        return axis_aligned_neighbors(
-            i,
-            j) + (
-            topleft_diagonal_neighbors(
-                i,
-                j) if diagtype is GridDiagonalDirection.TOPLEFT else topright_diagonal_neighbors(
-                i,
-                j))
+        return axis_aligned_neighbors(i,j) + (topleft_diagonal_neighbors(i,j)\
+            if diagtype is GridDiagonalDirection.TOPLEFT\
+            else topright_diagonal_neighbors(i,j))
 
     # add the constraints by the grid lines
     for i in range(N):

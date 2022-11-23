@@ -15,18 +15,21 @@ class System:
                  M: npt.NDArray):
         '''
          A system of discrete points, their states and their constraints.
+        
+        Inputs
+        ------
         q := initial positions matrix
         q1 := initial first derivatives of q (i.e. velocity) matrix
         M := mass matrix.
             This matrix must be diagonal of the form R^{D*n} where:
             - D := dimensions of the problem. This D in practice is the global variable "D" included in the "constants" module.
                     Typically this would have the value of three ( D = 3) , as 3D environments are taken into consideration.
-            - n := #particles in the mass-spring system
+            - n := number of particles in the mass-spring system
         cons := list of constraints associated with each q. TODO: Transform this into a 3D array/matrix (one selection array for each constraint)
         pinned := set of vertices (referred to by indices) to be pinned in position.
                     Equivalently, the ids included in the "pinned" set will not be subjected to any constraint (no spring force will be applied to them).
         '''
-        self.n = q.shape[0]
+        self.n = q.shape[0] # the object variable "n" denotes the number of particles in the mass-spring system.
 
         self.q = q
         # In the case of no initial velocity conditions from the client code,
@@ -38,8 +41,11 @@ class System:
         # self.cons[i, j] :=
         # i : id of point 
         # j : the constraint id (to which point i is subjected)
+        # This data structure (list of lists) keeps track of which particle (rows) is subject to which constraint (columns).
+        # Initially, no particle (#particles = n) is constrained.
         self.cons = [[] for i in range(self.n)]
         self.pinned = set()
+
 
         # sanity checks
         assert q.shape == (self.n, const.D)
@@ -53,12 +59,27 @@ class System:
         Construct and add a spring constraint to the system with the given parameters.
         The indices refer to the vertices already present in the system.
         '''
-        assert q_idx != p0_idx
+        assert 0 <= q_idx < self.n and q_idx != p0_idx
         c = Spring(k, L, p0=lambda: (self.q[p0_idx], p0_idx))
         # Add Spring constraint to the "q_idx"-th particle.
         # The p0 callable of the constraint returns the particle TO WHICH the "q_idx"-th particle is constrained.
         # Alternatively, it can be imagined that the direction of spring force applied on the "q_idx"-th will be (p0 - q).
         self.cons[q_idx].append(c)
+
+    def add_two_way_spring(self, k: float, L:float, q1_id: int, q2_id: int):
+        """
+        Construct and add two spring constraints to the system with the provided spring characteristics.
+        This function is closer to the intuitional way of looking at a spring: both end-points are pulled / pushed when the spring is extended / compressed.
+
+        Parameters
+        ----------
+        k := stiffness of the spring
+        L := rest length of the spring
+        q1_id := index in the "self.q" object. Refers to a point in the system.
+        q2_id :=    »   »   »   »       »       »       »       »       » 
+        """
+        self.add_spring(k, L, q1_id, q2_id)
+        self.add_spring(k, L, q2_id, q1_id)
 
     def f_ext(self):
         '''
@@ -82,21 +103,57 @@ class System:
         return la.block_diag(*wAtA)
 
     def wAtBp(self):
+        """
+        This function refers to this expression in the Global Solve (equation 10).
+        In mathematical notation, the following return value would be written as:
+        Σ ωi Ai' Bi pi, ∀i in constraints
+        The entries of the list "self.cons" belong in one of the two category-values:
+        I) Empty list ( [] ): in this case, the i-th particle is not of interest (energy) optimization problem; it has no constraints acting upon it.
+        II) Non-empty list. The i-th particle has at least one constraint acting upon it.
+        The characteristics of the each constraint (distance metrics A and B, important weight w, and auxiliary variable pi)
+        can be extracted explicitly (c.w, c.A, c.B) or implicitly (c.project() callable) by the "Constraint" object.
+        TODO Maybe change the variable signature from 'i' to something else, as it may be misleading when compared to the notation
+        TODO used in the paper. In the context of the paper, 'i' refers to the constraint index, not to the particle associated with it.
+        
+        Returns
+        -------
+        "numpy.array" object whose whose elements are the (3D) projections of each point.
+        output[0] -> projection of point with id = 0 (vector)
+        output[1] -> projection of point with id = 1 (vector)
+        ...
+        """
         wAtBp = [
             np.sum([c.w * c.A.T @ c.B @ c.project(self.q[i])
                     for c in self.cons[i]], axis=0)
             if self.cons[i] else np.zeros(const.D)
             for i in range(self.n)
         ]
+
         # a giant stack of all the points' column vectors.
         return np.array(wAtBp)
 
     def solve(self, h: float):
         '''
         Return the new q and q1 after a step of size h.
-        h = step size
+
+
+        Parameters
+        ----------
+        h := step size of the simulation.
+
+        Returns
+        -------
+        tuple (q, q1)
+        q := updated positions of the points of the system
+        q1 := updated velocities of the points the system
         '''
         # NOTE: All the local solutions happen inside `c.project()`.
+
+        # * IMPORTANT NOTE:
+        # * i) A linear system is written in the form Ax = y, where dim(A) = m x m, dim(x) = m x 1, dim(y) = m x 1
+        # * ii) The mass matrix M is inserted as the Kronecker product (block diagonal matrix) of the particles' masses.
+        # * In order to conform to form i) provided matrix M, all 3D information of the system (variables q, constants sn, wA'Bp)
+        # * needs to be manipulated ("reshaped" in numpy terms) accordingly; n x 3 form is changed to 3n x 1, where n = #particles.
 
         # All the selection matrices were ignored using the block-diagonal constructions.
         # We know that constraints are not shared between vertices in our
@@ -105,15 +162,23 @@ class System:
         wAtBp = self.wAtBp()
 
         M_h2 = self.M / (h * h)
+        # s_n = q_n + h v_n + h^2 M^{−1} fext
         s = self.q + h * self.q1 + \
             (la.inv(M_h2) @ self.f_ext().reshape(-1)).reshape(self.q.shape)
+        # Writing the more readable form below in case we decided to utilize it. Needless to say, we would have to store M^{-1}
+        # Software-engineering-wise, the current implementation is better, as the same value (M / h^2) is used in lhs and rhs as well.
+        # s = self.q + h * self.q1 + \
+        # (h**2 * la.inv(M) @ self.f_ext().reshape(-1)).reshape(self.q.shape)
 
-        lhs = M_h2 + wAtA
-        rhs = M_h2 @ s.reshape(-1) + wAtBp.reshape(-1)
+        lhs = M_h2 + wAtA # w A' A is already in matrix form (3n x 3n)
+        rhs = M_h2 @ s.reshape(-1) + wAtBp.reshape(-1) # M/h^2 (3n x 3n) . s (n x 3) --reshape-->  M/h^2 (3n x 3n) . s (3n x 1) --result--> 3n x 1 
 
+        # After solving the linear system, revert the dimensions of the output into n x 3.
         q = la.solve(lhs, rhs).reshape(self.q.shape)
         # pin these vertices
         q[list(self.pinned), :] = self.q[list(self.pinned), :]
+        # After computing the next position of the particles, we may trivially acquire the velocities of the particle in the next time step.
+        # Apply the first equation of implicit Euler integration: q'_{t} = q_{t - q_{t-1}} / h <=> q_{t} = q_{t-1} + h q'_{t}
         q1 = (q - self.q) / h
         return (q, q1)
 
