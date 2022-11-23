@@ -35,7 +35,8 @@ class GridDiagonalDirection(Enum):
     TOPRIGHT = 2
 
 
-def make_a_grid_system(diagtype: GridDiagonalDirection = GridDiagonalDirection.TOPLEFT):
+def make_a_grid_system(
+        diagtype: GridDiagonalDirection = GridDiagonalDirection.TOPLEFT):
     diagtype = GridDiagonalDirection(diagtype)
     # a grid system with N * N points.
     N = 10
@@ -61,9 +62,14 @@ def make_a_grid_system(diagtype: GridDiagonalDirection = GridDiagonalDirection.T
         (i - 1, j + 1), (i + 1, j - 1)]
 
     def neighbors(i, j):
-        return axis_aligned_neighbors(i, j) + (
-            topleft_diagonal_neighbors(i, j)
-            if diagtype is GridDiagonalDirection.TOPLEFT else topright_diagonal_neighbors(i, j))
+        return axis_aligned_neighbors(
+            i,
+            j) + (
+            topleft_diagonal_neighbors(
+                i,
+                j) if diagtype is GridDiagonalDirection.TOPLEFT else topright_diagonal_neighbors(
+                i,
+                j))
 
     # add the constraints by the grid lines
     for i in range(N):
