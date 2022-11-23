@@ -103,5 +103,5 @@ if __name__ == '__main__':
         print(f'Will save {nframes} frams of the animation to {saveto}.')
         os.makedirs(os.path.dirname(saveto), exist_ok=True)
 
-    s = demos.make_a_grid_system(diagtype=0)
+    s = demos.make_a_grid_system(diagtype=demos.GridDiagonalDirection.TOPLEFT)
     play_system(s, save=saveto, nframes=nframes)
