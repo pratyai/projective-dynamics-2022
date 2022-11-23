@@ -61,8 +61,9 @@ if __name__ == '__main__':
     argv = sys.argv[1:]
     saveto = None
     nframes = 900
+    meshfile = None
     try:
-        opts, args = getopt.getopt(argv, 'w:n:')
+        opts, args = getopt.getopt(argv, 'w:n:m:')
     except getopt.GetoptError as err:
         print(err)
         sys.exit(2)
@@ -71,9 +72,13 @@ if __name__ == '__main__':
             saveto = a
         elif o == '-n':
             nframes = int(a)
+        elif o == '-m':
+            meshfile = a
     if saveto is not None:
         print(f'Will save {nframes} frams of the animation to {saveto}.')
         os.makedirs(os.path.dirname(saveto), exist_ok=True)
 
-    s = demos.make_a_grid_system(diagtype=demos.GridDiagonalDirection.TOPLEFT)
+    s = demos.make_triangle_mesh_system(
+        meshfile, 1, 10) if meshfile is not None else demos.make_a_grid_system(
+        diagtype=demos.GridDiagonalDirection.TOPLEFT)
     play_system(s, save=saveto, nframes=nframes)
