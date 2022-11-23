@@ -1,4 +1,8 @@
 import numpy as np
+import numpy.typing as npt
+import constants as con
+
+
 import openmesh as om
 
 import system as msys
@@ -7,9 +11,16 @@ from enum import Enum
 
 def make_a_two_point_system():
     q = np.array([[0, 0, 0], [0.25, 0, 0]])
-    m = np.array([10, 1])
-    s = msys.System(q=q, q1=None, M=np.kron(
-        np.diagflat(m), np.identity(msys.System.D)))
+    masses_per_point = np.array([10, 1]) # Masses per point. 0th position has the mass of the 0th particle, 1st positions has the mass of the 1st particle etc.
+    M = np.kron(np.diag(masses_per_point), np.identity(con.D)) #? Wouldn't it be a better idea to refer to the dimensionality of the problem from a global variable (defined in the "constants.py" module), instead of keeping it inside the "System"?
+    s = msys.System(q=q, q1=None, M=M)
+    # Keeping the old implementation here as well in case of disagreement.
+    # s = msys.System(q=q, q1=None, M=np.kron(``
+    #     np.diagflat(m), np.identity(msys.System.D)))
+    # the heavy one will be pinned at origin.
+    # m = np.array([10, 1])
+    # s = msys.System(q=q, q1=None, M=np.kron(
+    #     np.diagflat(m), np.identity(msys.System.D)))
     # the heavy one will be pinned at origin.
     s.pinned.add(0)
     # the light one will be tied to the heavy one with a spring.
