@@ -45,6 +45,16 @@ class System:
         assert q_idx != p0_idx
         c = Spring(k, L, p0=lambda: (self.q[p0_idx], p0_idx))
         self.cons[q_idx].append(c)
+        
+    def add_two_way_spring(self, k: float, L: float, q1_id: int, q2_id: int):
+        '''
+        Construct and add two springs constraints to the system with the given parameters.
+        The indices refer to the vertices already present in the system.
+        '''
+        assert q1_id >= 0 and q2_id >= 0
+        assert q1_id != q2_id
+        self.add_spring(k, L, q1_id, q2_id)
+        self.add_spring(k, L, q2_id, q1_id)
 
     def f_ext(self):
         '''
