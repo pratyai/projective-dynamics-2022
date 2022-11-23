@@ -115,6 +115,7 @@ def make_triangle_mesh_system(
 
         # Add our spring
         s.add_spring(k=k, L=L, q_idx=i, p0_idx=j)
+        s.add_spring(k=k, L=L, q_idx=j, p0_idx=i)
 
     # Manually pin the first vertex
     s.pinned.add(0)
