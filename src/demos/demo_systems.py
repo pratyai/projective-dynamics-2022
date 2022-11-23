@@ -2,6 +2,7 @@ import numpy as np
 import openmesh as om
 
 import system as msys
+from enum import Enum
 
 
 def make_a_two_point_system():
@@ -21,8 +22,6 @@ def make_a_three_point_system():
     m = np.array([10, 1, 1])
     s = msys.System(q=q, q1=None, M=np.kron(
         np.diagflat(m), np.identity(msys.System.D)))
-    s = msys.System(q=q, q1=None, M=np.kron(
-        np.diagflat(m), np.identity(msys.System.D)))
     # the heavy one will be pinned at origin.
     s.pinned.add(0)
     # the light ones will be tied to the other two with springs.
@@ -33,7 +32,14 @@ def make_a_three_point_system():
     return s
 
 
-def make_a_grid_system():
+class GridDiagonalDirection(Enum):
+    TOPLEFT = 1
+    TOPRIGHT = 2
+
+
+def make_a_grid_system(
+        diagtype: GridDiagonalDirection = GridDiagonalDirection.TOPLEFT):
+    diagtype = GridDiagonalDirection(diagtype)
     # a grid system with N * N points.
     N = 10
     # create the points
@@ -48,9 +54,25 @@ def make_a_grid_system():
 
     def vtxid(i, j): return i * N + j
 
-    def neighbors(i, j): return [
-        (i - 1, j), (i, j - 1), (i + 1, j), (i, j + 1),
-        (i - 1, j - 1), (i + 1, j + 1), (i - 1, j + 1), (i + 1, j - 1)]
+    def axis_aligned_neighbors(i, j): return [(
+        i - 1, j), (i, j - 1), (i + 1, j), (i, j + 1)]
+
+    def topleft_diagonal_neighbors(i, j): return [
+        (i - 1, j - 1), (i + 1, j + 1)]
+
+    def topright_diagonal_neighbors(i, j): return [
+        (i - 1, j + 1), (i + 1, j - 1)]
+
+    def neighbors(i, j):
+        return axis_aligned_neighbors(
+            i,
+            j) + (
+            topleft_diagonal_neighbors(
+                i,
+                j) if diagtype is GridDiagonalDirection.TOPLEFT else topright_diagonal_neighbors(
+                i,
+                j))
+
     # add the constraints by the grid lines
     for i in range(N):
         for j in range(N):
