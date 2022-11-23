@@ -9,24 +9,54 @@ import openmesh as om
 import system as msys
 from . import demo_systems
 
+# Custom item width
+MY_ITEM_WIDTH = 100
+
 def ui_callback(state: dict):
     """
     The callback function for the Polyscope application. Manages the user interface, the polyscope application, and the system.
     """
     
-    # System parameters section
+    ui_system_parameters(state)
+    ui_simulation_control(state)
+    
+    # Update the system and polyscope mesh when the application is running
+    if state['ui_is_running']:
+        _update_system(state)
+        _update_polyscope_mesh(state)
+
+def ui_system_parameters(state:dict):
+    """
+    System parameters section of the UI.
+    """
     if(psim.TreeNodeEx("System Parameters",
                        flags=psim.ImGuiTreeNodeFlags_DefaultOpen)):
-    
+        
         # Reset simulation button
         if (psim.Button("Reset")):
             state['ui_is_running'] = False
             _initialize_system(state)
             _update_polyscope_mesh(state)
-            
+        
+        psim.PushItemWidth(MY_ITEM_WIDTH)
+        # Point mass float input
+        changed, state['ui_point_mass'] = psim.InputFloat(
+            "Point mass", state['ui_point_mass'])
+        
+        # Spring stiffness float input
+        changed, state['ui_spring_stiffness'] = psim.InputFloat(
+            "Spring stiffness", state['ui_spring_stiffness']) 
+        psim.PopItemWidth()
+        
+        # Pin selected nodes
+        if (psim.Button("Pin Selection")): _pin_selected_nodes(state)
+        
         psim.TreePop()
-    
-    # System control section
+
+def ui_simulation_control(state:dict):
+    """
+    Simulation control section of the UI.
+    """
     if (psim.TreeNodeEx("Simulation Control",
                        flags=psim.ImGuiTreeNodeFlags_DefaultOpen)):
         
@@ -35,18 +65,17 @@ def ui_callback(state: dict):
         if (psim.Button(start_stop_button_text)):
             state['ui_is_running'] = not state['ui_is_running']
         
+        psim.PushItemWidth(MY_ITEM_WIDTH)
         # Step size slider
-        changed, state['ui_h'] = psim.SliderFloat(
-            "Step size", state['ui_h'], v_min=0.001, v_max=1.0)
+        changed, state['ui_h'] = psim.InputFloat(
+            "Step size", state['ui_h'])
         
         # Steps per frame
         changed, state['ui_steps_per_frame'] = psim.InputInt(
-            "ui_int", state['ui_steps_per_frame'], step=1, step_fast=10)
-    
-    # Update the system and polyscope mesh when the application is running
-    if state['ui_is_running']:
-        _update_system(state)
-        _update_polyscope_mesh(state)
+            "Steps Per Frame", state['ui_steps_per_frame'], step=1, step_fast=10)
+        psim.PopItemWidth()
+
+        psim.TreePop()
 
 def _initialize_system(state: dict):
     """
@@ -61,6 +90,19 @@ def _update_system(state: dict):
     """
     for i in range(state['ui_steps_per_frame']):
             state['system'].step(state['ui_h'])
+
+def _pin_selected_nodes(state: dict):
+    """
+    If a node is selected, pin it in our system.
+    """
+    # Do nothing if nothing is selected
+    if not ps.have_selection(): return
+    
+    # Otherwise get the selection
+    ps_mesh, element_index = ps.get_selection()
+    
+    # And pin the corresponding vertex
+    state['system'].pinned.add(element_index)
 
 def _initialize_polyscope_mesh(state: dict):
     """
