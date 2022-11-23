@@ -45,7 +45,7 @@ class System:
         assert q_idx != p0_idx
         c = Spring(k, L, p0=lambda: (self.q[p0_idx], p0_idx))
         self.cons[q_idx].append(c)
-        
+
     def add_two_way_spring(self, k: float, L: float, q1_id: int, q2_id: int):
         '''
         Construct and add two springs constraints to the system with the given parameters.
