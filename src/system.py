@@ -15,7 +15,7 @@ class System:
                  M: npt.NDArray):
         '''
          A system of discrete points, their states and their constraints.
-        
+
         Inputs
         ------
         q := initial positions matrix
@@ -29,7 +29,7 @@ class System:
         pinned := set of vertices (referred to by indices) to be pinned in position.
                     Equivalently, the ids included in the "pinned" set will not be subjected to any constraint (no spring force will be applied to them).
         '''
-        self.n = q.shape[0] # the object variable "n" denotes the number of particles in the mass-spring system.
+        self.n = q.shape[0]  # the object variable "n" denotes the number of particles in the mass-spring system.
 
         self.q = q
         # In the case of no initial velocity conditions from the client code,
@@ -39,19 +39,19 @@ class System:
         self.q1 = q1
         self.M = M
         # self.cons[i, j] :=
-        # i : id of point 
+        # i : id of point
         # j : the constraint id (to which point i is subjected)
         # This data structure (list of lists) keeps track of which particle (rows) is subject to which constraint (columns).
         # Initially, no particle (#particles = n) is constrained.
         self.cons = [[] for i in range(self.n)]
         self.pinned = set()
 
-
         # sanity checks
         assert q.shape == (self.n, const.D)
         assert q1.shape == (self.n, const.D)
         assert M.shape == (self.n * const.D, self.n * const.D)
-        assert np.count_nonzero(M - np.diag(np.diagonal(M, offset=0))) == 0 # Checking whether the M provided is diagonal.
+        # Checking whether the M provided is diagonal.
+        assert np.count_nonzero(M - np.diag(np.diagonal(M, offset=0))) == 0
         assert len(self.cons) == self.n
 
     def add_spring(self, k: float, L: float, q_idx: int, p0_idx: int):
@@ -63,10 +63,11 @@ class System:
         c = Spring(k, L, p0=lambda: (self.q[p0_idx], p0_idx))
         # Add Spring constraint to the "q_idx"-th particle.
         # The p0 callable of the constraint returns the particle TO WHICH the "q_idx"-th particle is constrained.
-        # Alternatively, it can be imagined that the direction of spring force applied on the "q_idx"-th will be (p0 - q).
+        # Alternatively, it can be imagined that the direction of spring force
+        # applied on the "q_idx"-th will be (p0 - q).
         self.cons[q_idx].append(c)
 
-    def add_two_way_spring(self, k: float, L:float, q1_id: int, q2_id: int):
+    def add_two_way_spring(self, k: float, L: float, q1_id: int, q2_id: int):
         """
         Construct and add two spring constraints to the system with the provided spring characteristics.
         This function is closer to the intuitional way of looking at a spring: both end-points are pulled / pushed when the spring is extended / compressed.
@@ -76,7 +77,7 @@ class System:
         k := stiffness of the spring
         L := rest length of the spring
         q1_id := index in the "self.q" object. Refers to a point in the system.
-        q2_id :=    »   »   »   »       »       »       »       »       » 
+        q2_id :=    »   »   »   »       »       »       »       »       »
         """
         self.add_spring(k, L, q1_id, q2_id)
         self.add_spring(k, L, q2_id, q1_id)
@@ -87,7 +88,9 @@ class System:
         TODO: forces need to be parameterized instead of hardcoded.
         '''
         gravity_force = np.array([np.array([0, 0, -0.1])] * self.q.shape[0])
-        # gravity_force = np.array(const.gravity_accelaration * self.q.shape[0]) # Alternative, which utilizes the scientific constant g.
+        # gravity_force = np.array(const.gravity_accelaration *
+        # self.q.shape[0]) # Alternative, which utilizes the scientific
+        # constant g.
         damping_force = -0.5 * self.q1
         return gravity_force
 
@@ -114,7 +117,7 @@ class System:
         can be extracted explicitly (c.w, c.A, c.B) or implicitly (c.project() callable) by the "Constraint" object.
         TODO Maybe change the variable signature from 'i' to something else, as it may be misleading when compared to the notation
         TODO used in the paper. In the context of the paper, 'i' refers to the constraint index, not to the particle associated with it.
-        
+
         Returns
         -------
         "numpy.array" object whose whose elements are the (3D) projections of each point.
@@ -170,15 +173,19 @@ class System:
         # s = self.q + h * self.q1 + \
         # (h**2 * la.inv(M) @ self.f_ext().reshape(-1)).reshape(self.q.shape)
 
-        lhs = M_h2 + wAtA # w A' A is already in matrix form (3n x 3n)
-        rhs = M_h2 @ s.reshape(-1) + wAtBp.reshape(-1) # M/h^2 (3n x 3n) . s (n x 3) --reshape-->  M/h^2 (3n x 3n) . s (3n x 1) --result--> 3n x 1 
+        lhs = M_h2 + wAtA  # w A' A is already in matrix form (3n x 3n)
+        # M/h^2 (3n x 3n) . s (n x 3) --reshape-->  M/h^2 (3n x 3n) . s (3n x
+        # 1) --result--> 3n x 1
+        rhs = M_h2 @ s.reshape(-1) + wAtBp.reshape(-1)
 
-        # After solving the linear system, revert the dimensions of the output into n x 3.
+        # After solving the linear system, revert the dimensions of the output
+        # into n x 3.
         q = la.solve(lhs, rhs).reshape(self.q.shape)
         # pin these vertices
         q[list(self.pinned), :] = self.q[list(self.pinned), :]
         # After computing the next position of the particles, we may trivially acquire the velocities of the particle in the next time step.
-        # Apply the first equation of implicit Euler integration: q'_{t} = q_{t - q_{t-1}} / h <=> q_{t} = q_{t-1} + h q'_{t}
+        # Apply the first equation of implicit Euler integration: q'_{t} = q_{t
+        # - q_{t-1}} / h <=> q_{t} = q_{t-1} + h q'_{t}
         q1 = (q - self.q) / h
         return (q, q1)
 
@@ -200,9 +207,11 @@ if __name__ == '__main__':
 
     s = System(q=q, q1=None, M=np.kron(
         np.identity(q.shape[0]), np.identity(const.D)))
-    # A spring force is applied to the particle with id = 1, relevant to the position of the particle with id = 0.
+    # A spring force is applied to the particle with id = 1, relevant to the
+    # position of the particle with id = 0.
     s.add_spring(k=1, L=1, q_idx=1, p0_idx=0)
-    # Note: As there is no constraint on particle with id = 0, it is implied that particle with id = 0 is fixed.
+    # Note: As there is no constraint on particle with id = 0, it is implied
+    # that particle with id = 0 is fixed.
 
     for i in range(100):
         s.step(0.01)
