@@ -35,8 +35,8 @@ def ui_system_parameters(state: dict):
     """
     System parameters section of the UI.
     """
-    if (psim.TreeNodeEx("System Parameters",
-                        flags=psim.ImGuiTreeNodeFlags_DefaultOpen)):
+    if(psim.TreeNodeEx("System Parameters",
+                       flags=psim.ImGuiTreeNodeFlags_DefaultOpen)):
 
         # Reset simulation button
         if (psim.Button("Reset")):
@@ -167,7 +167,7 @@ def main(filename: str):
         'ui_point_mass': 1,
         'ui_spring_stiffness': 1,
         'ps_mesh': None,
-        'ui_is_running': True,
+        'ui_is_running': False,
         'ui_h': 0.01,
         'ui_steps_per_frame': 10
     }

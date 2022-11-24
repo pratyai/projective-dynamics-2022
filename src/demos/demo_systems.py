@@ -1,15 +1,29 @@
 import numpy as np
-import openmesh as om
+import numpy.typing as npt
+import constants as con
+
+
+#import openmesh as om
 
 import system as msys
-from enum import Enum
+from enum import Enum, auto
 
 
 def make_a_two_point_system():
     q = np.array([[0, 0, 0], [0.25, 0, 0]])
-    m = np.array([10, 1])
-    s = msys.System(q=q, q1=None, M=np.kron(
-        np.diagflat(m), np.identity(msys.System.D)))
+    # Masses per point. 0th position has the mass of the 0th particle, 1st
+    # positions has the mass of the 1st particle etc.
+    masses_per_point = np.array([10, 1])
+    # ? Wouldn't it be a better idea to refer to the dimensionality of the problem from a global variable (defined in the "constants.py" module), instead of keeping it inside the "System"?
+    M = np.kron(np.diag(masses_per_point), np.identity(con.D))
+    s = msys.System(q=q, q1=None, M=M)
+    # Keeping the old implementation here as well in case of disagreement.
+    # s = msys.System(q=q, q1=None, M=np.kron(``
+    #     np.diagflat(m), np.identity(msys.System.D)))
+    # the heavy one will be pinned at origin.
+    # m = np.array([10, 1])
+    # s = msys.System(q=q, q1=None, M=np.kron(
+    #     np.diagflat(m), np.identity(msys.System.D)))
     # the heavy one will be pinned at origin.
     s.pinned.add(0)
     # the light one will be tied to the heavy one with a spring.
@@ -25,6 +39,13 @@ def make_a_three_point_system():
     # the heavy one will be pinned at origin.
     s.pinned.add(0)
     # the light ones will be tied to the other two with springs.
+    # id0 -- id1
+    #     \      \
+    #        \     \
+    #           \    \
+    #             \   \
+    #               id2
+    # No force is applied on the particle with id = 0 (a.k.a. it is fixed).
     s.add_spring(k=1, L=1, q_idx=1, p0_idx=0)
     s.add_spring(k=1, L=1, q_idx=1, p0_idx=2)
     s.add_spring(k=1, L=1, q_idx=2, p0_idx=0)
@@ -33,8 +54,8 @@ def make_a_three_point_system():
 
 
 class GridDiagonalDirection(Enum):
-    TOPLEFT = 1
-    TOPRIGHT = 2
+    TOPLEFT = auto()
+    TOPRIGHT = auto()
 
 
 def make_a_grid_system(
@@ -54,24 +75,24 @@ def make_a_grid_system(
 
     def vtxid(i, j): return i * N + j
 
-    def axis_aligned_neighbors(i, j): return [(
-        i - 1, j), (i, j - 1), (i + 1, j), (i, j + 1)]
+    def axis_aligned_neighbors(i, j):
+        # Return: Up, left, down, right #? Is the convention "i+1 = i + one
+        # down" and "j+1 = j + one on the right" correct? The same question
+        # applies for the functions below.
+        return [(i - 1, j), (i, j - 1), (i + 1, j), (i, j + 1)]
 
-    def topleft_diagonal_neighbors(i, j): return [
-        (i - 1, j - 1), (i + 1, j + 1)]
+    def topleft_diagonal_neighbors(i, j):
+        # Return: diagonal up-left, diagonal down-right
+        return [(i - 1, j - 1), (i + 1, j + 1)]
 
-    def topright_diagonal_neighbors(i, j): return [
-        (i - 1, j + 1), (i + 1, j - 1)]
+    def topright_diagonal_neighbors(i, j):
+        # Return: diagonal up-right, diagonal down-left
+        return [(i - 1, j + 1), (i + 1, j - 1)]
 
     def neighbors(i, j):
-        return axis_aligned_neighbors(
-            i,
-            j) + (
-            topleft_diagonal_neighbors(
-                i,
-                j) if diagtype is GridDiagonalDirection.TOPLEFT else topright_diagonal_neighbors(
-                i,
-                j))
+        return axis_aligned_neighbors(i, j) + (topleft_diagonal_neighbors(i, j)
+                                               if diagtype is GridDiagonalDirection.TOPLEFT
+                                               else topright_diagonal_neighbors(i, j))
 
     # add the constraints by the grid lines
     for i in range(N):
