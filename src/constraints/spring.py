@@ -19,9 +19,9 @@ class Spring(Constraint):
         '''
         Spring constant that always wants to move a 3d point to a resting location,
         which is a fixed distance away from the other end of the spring.
-        k = spring constant
-        L = rest length
-        p0 = a callable that returns the resting location
+        k := spring stiffness constant
+        L := rest length
+        p0 := a callable that returns the location according to which the restoring force (magnitude and direction) of the spring is determined. 
         kwargs = remaining keyword argument
         '''
         super(Spring, self).__init__(**kwargs)
@@ -33,13 +33,17 @@ class Spring(Constraint):
     def project(self, q: npt.NDArray):
         '''
         "Project" a single point q on the constraint.
+        Step 1) Get the (global) position of the point p0 on the other end of the spring.
+        Step 2) Construct the vector d defined by p0 and q (p0 -> q).
+        Step 3) "Translate" (move) point p0 by L in the direction of d. Name the result p.
+        p is the point on which we require q to be projected on: if q is p, the spring will be at rest.
         '''
         p0, p0_idx = self.p0()
         d = q - p0
         if la.norm(d) < const.EPS:
             raise RuntimeError('undefined [spring is too compressed]')
-        u = d / la.norm(d)
-        return p0 + u * self.L
+        d /= la.norm(d) # Normalize vector "d" so as to extract a (unit) direction. Its magnitude is determined by the rest length L.
+        return p0 + d * self.L
 
     def p0(self):
         '''
