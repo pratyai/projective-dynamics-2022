@@ -11,8 +11,11 @@ from enum import Enum, auto
 
 def make_a_two_point_system():
     q = np.array([[0, 0, 0], [0.25, 0, 0]])
-    masses_per_point = np.array([10, 1]) # Masses per point. 0th position has the mass of the 0th particle, 1st positions has the mass of the 1st particle etc.
-    M = np.kron(np.diag(masses_per_point), np.identity(con.D)) #? Wouldn't it be a better idea to refer to the dimensionality of the problem from a global variable (defined in the "constants.py" module), instead of keeping it inside the "System"?
+    # Masses per point. 0th position has the mass of the 0th particle, 1st
+    # positions has the mass of the 1st particle etc.
+    masses_per_point = np.array([10, 1])
+    # ? Wouldn't it be a better idea to refer to the dimensionality of the problem from a global variable (defined in the "constants.py" module), instead of keeping it inside the "System"?
+    M = np.kron(np.diag(masses_per_point), np.identity(con.D))
     s = msys.System(q=q, q1=None, M=M)
     # Keeping the old implementation here as well in case of disagreement.
     # s = msys.System(q=q, q1=None, M=np.kron(``
@@ -38,7 +41,7 @@ def make_a_three_point_system():
     # the light ones will be tied to the other two with springs.
     # id0 -- id1
     #     \      \
-    #        \     \ 
+    #        \     \
     #           \    \
     #             \   \
     #               id2
@@ -72,8 +75,10 @@ def make_a_grid_system(
 
     def vtxid(i, j): return i * N + j
 
-    def axis_aligned_neighbors(i, j): 
-        # Return: Up, left, down, right #? Is the convention "i+1 = i + one down" and "j+1 = j + one on the right" correct? The same question applies for the functions below.
+    def axis_aligned_neighbors(i, j):
+        # Return: Up, left, down, right #? Is the convention "i+1 = i + one
+        # down" and "j+1 = j + one on the right" correct? The same question
+        # applies for the functions below.
         return [(i - 1, j), (i, j - 1), (i + 1, j), (i, j + 1)]
 
     def topleft_diagonal_neighbors(i, j):
@@ -85,9 +90,9 @@ def make_a_grid_system(
         return [(i - 1, j + 1), (i + 1, j - 1)]
 
     def neighbors(i, j):
-        return axis_aligned_neighbors(i,j) + (topleft_diagonal_neighbors(i,j)\
-            if diagtype is GridDiagonalDirection.TOPLEFT\
-            else topright_diagonal_neighbors(i,j))
+        return axis_aligned_neighbors(i, j) + (topleft_diagonal_neighbors(i, j)
+                                               if diagtype is GridDiagonalDirection.TOPLEFT
+                                               else topright_diagonal_neighbors(i, j))
 
     # add the constraints by the grid lines
     for i in range(N):

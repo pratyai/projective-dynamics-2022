@@ -21,7 +21,7 @@ class Spring(Constraint):
         which is a fixed distance away from the other end of the spring.
         k := spring stiffness constant
         L := rest length
-        p0 := a callable that returns the location according to which the restoring force (magnitude and direction) of the spring is determined. 
+        p0 := a callable that returns the location according to which the restoring force (magnitude and direction) of the spring is determined.
         kwargs = remaining keyword argument
         '''
         super(Spring, self).__init__(**kwargs)
@@ -42,7 +42,9 @@ class Spring(Constraint):
         d = q - p0
         if la.norm(d) < const.EPS:
             raise RuntimeError('undefined [spring is too compressed]')
-        d /= la.norm(d) # Normalize vector "d" so as to extract a (unit) direction. Its magnitude is determined by the rest length L.
+        # Normalize vector "d" so as to extract a (unit) direction. Its
+        # magnitude is determined by the rest length L.
+        d /= la.norm(d)
         return p0 + d * self.L
 
     def p0(self):
