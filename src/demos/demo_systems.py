@@ -130,8 +130,7 @@ def make_triangle_mesh_system(
         L = np.linalg.norm(v - u)  # Spring length
 
         # Add springs between every two edges
-        s.add_spring(k=k, L=L, q_idx=i, p0_idx=j)
-        s.add_spring(k=k, L=L, q_idx=j, p0_idx=i)
+        s.add_two_way_spring(k=k, l=L, q_idx=i, p0_idx=j)
 
     # Return the system
     return s
