@@ -45,6 +45,7 @@ class System:
         # Initially, no particle (#particles = n) is constrained.
         self.cons = [[] for i in range(self.n)]
         self.pinned = set()
+        self.lhs_inv = None
 
         # sanity checks
         assert q.shape == (self.n, const.D)
@@ -161,7 +162,6 @@ class System:
         # All the selection matrices were ignored using the block-diagonal constructions.
         # We know that constraints are not shared between vertices in our
         # current model.
-        wAtA = self.wAtA()
         wAtBp = self.wAtBp()
 
         M_h2 = self.M / (h * h)
@@ -173,14 +173,15 @@ class System:
         # s = self.q + h * self.q1 + \
         # (h**2 * la.inv(M) @ self.f_ext().reshape(-1)).reshape(self.q.shape)
 
-        lhs = M_h2 + wAtA  # w A' A is already in matrix form (3n x 3n)
-        # M/h^2 (3n x 3n) . s (n x 3) --reshape-->  M/h^2 (3n x 3n) . s (3n x
-        # 1) --result--> 3n x 1
-        rhs = M_h2 @ s.reshape(-1) + wAtBp.reshape(-1)
+        rhs = M_h2 @ s.reshape(-1) + wAtBp.reshape(-1) # M/h^2 (3n x 3n) . s (n x 3) --reshape-->  M/h^2 (3n x 3n) . s (3n x 1) --result--> 3n x 1 
 
-        # After solving the linear system, revert the dimensions of the output
-        # into n x 3.
-        q = la.solve(lhs, rhs).reshape(self.q.shape)
+        if self.lhs_inv is None:
+            wAtA = self.wAtA()
+            lhs = M_h2 + wAtA # w A' A is already in matrix form (3n x 3n)
+            self.lhs_inv = la.inv(lhs)
+        # After solving the linear system, revert the dimensions of the output into n x 3.
+        # q = la.solve(lhs, rhs).reshape(self.q.shape)
+        q = (self.lhs_inv @ rhs).reshape(self.q.shape)
         # pin these vertices
         q[list(self.pinned), :] = self.q[list(self.pinned), :]
         # After computing the next position of the particles, we may trivially acquire the velocities of the particle in the next time step.
