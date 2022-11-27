@@ -1,10 +1,7 @@
 import numpy as np
 import numpy.typing as npt
 import constants as con
-
-
-#import openmesh as om
-
+import openmesh as om
 import system as msys
 from enum import Enum, auto
 
