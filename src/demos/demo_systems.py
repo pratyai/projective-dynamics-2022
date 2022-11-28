@@ -5,6 +5,29 @@ import openmesh as om
 import system as msys
 from enum import Enum, auto
 
+def make_a_one_spring_system_0():
+    """
+    One spring system that is at rest.
+    """
+    q = np.array([[0, 0, 0], [0, 0, -1.0]])
+    masses_per_point = np.array([1, 1])
+    M = np.kron(np.diag(masses_per_point), np.identity(con.D))
+    s = msys.System(q=q, q1=None, M=M)
+    s.pinned.add(0)
+    s.add_spring(k=10, L=1, q_idx=1, p0_idx=0)
+    return s
+
+def make_a_one_spring_system_1():
+    """
+    One spring system that starts to oscillate.
+    """
+    q = np.array([[0, 0, 0], [0, 0, -2.0]])
+    masses_per_point = np.array([1, 1])
+    M = np.kron(np.diag(masses_per_point), np.identity(con.D))
+    s = msys.System(q=q, q1=None, M=M)
+    s.pinned.add(0)
+    s.add_spring(k=10, L=1, q_idx=1, p0_idx=0)
+    return s
 
 def make_a_two_point_system():
     q = np.array([[0, 0, 0], [0.25, 0, 0]])
@@ -130,7 +153,7 @@ def make_triangle_mesh_system(
         L = np.linalg.norm(v - u)  # Spring length
 
         # Add springs between every two edges
-        s.add_two_way_spring(k=k, l=L, q_idx=i, p0_idx=j)
+        s.add_two_way_spring(k=k, L=L, q1_id=i, q2_id=j)
 
     # Return the system
     return s
