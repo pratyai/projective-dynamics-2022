@@ -8,6 +8,9 @@ import openmesh as om
 # Our imports
 import system as msys
 from . import demo_systems
+import sys
+import os
+import subprocess
 
 # Custom item width
 MY_ITEM_WIDTH = 100
@@ -25,6 +28,7 @@ def ui_callback(state: dict):
     if state['ui_is_running']:
         _update_system(state)
         _update_polyscope_mesh(state)
+        ps.screenshot(transparent_bg=True)
 
 
 def ui_system_parameters(state: dict):
@@ -196,3 +200,6 @@ if __name__ == '__main__':
 
     # Pass the filename to our main function
     main(args.filename)
+    subprocess.run(
+        f"mkdir -p ../demos/ &&ffmpeg -y -framerate 30 -pattern_type glob -i 'screenshot_*.png' -c:v libx264 -pix_fmt yuv420p ../demos/{os.path.basename(args.filename)}.mp4 && rm screenshot_*.png",
+        shell=True)
