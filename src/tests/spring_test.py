@@ -60,8 +60,8 @@ class TestProjection(unittest.TestCase):
         q0 = np.array([0, 0, 0])
         q1 = np.array([1.5, 1.5, 1.5])
         L = np.sqrt(3)
-        want_p = np.array([0.75 - hlp.unit(np.ones(3)) * L/2,
-                          0.75 + hlp.unit(np.ones(3)) * L/2])
+        want_p = np.array([0.75 - hlp.unit(np.ones(3)) * L / 2,
+                           0.75 + hlp.unit(np.ones(3)) * L / 2])
         c = Spring(k=1, L=L, q=lambda: [(q0, None), (q1, None)])
         np.testing.assert_array_almost_equal(
             [p for (p, i) in c.project()], want_p)

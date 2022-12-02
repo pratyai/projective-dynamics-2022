@@ -47,8 +47,8 @@ class Spring(Constraint):
         assert len(q) == 2
         if la.norm(q[0][0] - q[1][0]) < const.EPS:
             raise RuntimeError('undefined [spring is too compressed]')
-        CG = np.sum([qi for (qi, idx) in q], axis=0)/len(q)
-        p = [(CG + hlp.unit(qi - CG) * self.L/2, idx) for (qi, idx) in q]
+        CG = np.sum([qi for (qi, idx) in q], axis=0) / len(q)
+        p = [(CG + hlp.unit(qi - CG) * self.L / 2, idx) for (qi, idx) in q]
         return p
 
     def q(self):
