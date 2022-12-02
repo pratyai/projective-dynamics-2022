@@ -35,8 +35,8 @@ def ui_system_parameters(state: dict):
     """
     System parameters section of the UI.
     """
-    if(psim.TreeNodeEx("System Parameters",
-                       flags=psim.ImGuiTreeNodeFlags_DefaultOpen)):
+    if (psim.TreeNodeEx("System Parameters",
+                        flags=psim.ImGuiTreeNodeFlags_DefaultOpen)):
 
         # Reset simulation button
         if (psim.Button("Reset")):
@@ -117,15 +117,20 @@ def _pin_selected_nodes(state: dict):
     state['system'].pinned.add(element_index)
 
 
+def edge(c):
+    '''
+    Compute the edge for the constraint `c` (index form).
+    '''
+    q = c.q()
+    return [q[0][1], q[1][1]]
+
+
 def _initialize_polyscope_mesh(state: dict):
     """
     Initialize the polyscope mesh to be a curve network where each edge corresponds to a spring in our system.
     """
     system = state['system']
-    edges = np.array([[qi, c.p0()[1]]
-                      for (qi, (q, cs)) in enumerate(zip(system.q, system.cons))
-                      for c in cs
-                      if c.p0()[1] is not None])
+    edges = np.array([edge(c) for c in system.cons])
     state['ps_mesh'] = ps.register_curve_network(
         name='ps_mesh', nodes=system.q, edges=edges)
 

@@ -12,52 +12,56 @@ import numpy as np
 import numpy.typing as npt
 import numpy.linalg as la
 import constants as const
+import helpers as hlp
 
 
 class Spring(Constraint):
-    def __init__(self, k: float, L: float, p0: callable, **kwargs):
+    def __init__(self, k: float, L: float, q: callable, **kwargs):
         '''
         Spring constant that always wants to move a 3d point to a resting location,
         which is a fixed distance away from the other end of the spring.
         k := spring stiffness constant
         L := rest length
-        p0 := a callable that returns the location according to which the restoring force (magnitude and direction) of the spring is determined.
+        q := a callable that returns a list of tuples. The list is of size 2,
+             one tuple for each end of the spring, each tuple of the form `(point#i, index_of_point#i)`.
         kwargs = remaining keyword argument
         '''
         super(Spring, self).__init__(**kwargs)
         self.k = k
         self.w *= k
         self.L = L
-        self.p0 = p0
+        self.q = q
 
-    def project(self, q: npt.NDArray):
+    def project(self):
         '''
-        "Project" a single point q on the constraint.
-        Step 1) Get the (global) position of the point p0 on the other end of the spring.
-        Step 2) Construct the vector d defined by p0 and q (p0 -> q).
-        Step 3) "Translate" (move) point p0 by L in the direction of d. Name the result p.
-        p is the point on which we require q to be projected on: if q is p, the spring will be at rest.
+        Return the projections of all the vertices involved with this constraint.
+
+        How to compute projections:
+        Step 1) Get the center of gravity (CG) of the spring. This CG will also be the CG of the projection.
+                NOTE: We will assume equal masses on both ends for now. This may make the simulation
+                unstable for unequal masses.
+        Step 2) Assign p[i] = CG + unit(q[i] - CG) * L/2 for i in [0, 1].
+        Step 3) Return as documented in `Constraint.project()`.
         '''
-        p0, p0_idx = self.p0()
-        d = q - p0
-        if la.norm(d) < const.EPS:
+        q = self.q()
+        assert len(q) == 2
+        if la.norm(q[0][0] - q[1][0]) < const.EPS:
             raise RuntimeError('undefined [spring is too compressed]')
-        # Normalize vector "d" so as to extract a (unit) direction. Its
-        # magnitude is determined by the rest length L.
-        d /= la.norm(d)
-        return p0 + d * self.L
+        CG = np.sum([qi for (qi, idx) in q], axis=0)/len(q)
+        p = [(CG + hlp.unit(qi - CG) * self.L/2, idx) for (qi, idx) in q]
+        return p
 
-    def p0(self):
+    def q(self):
         '''
-        Find the other end of the spring.
-        Since the other end is not necessarily fixed, and will typically refer
-        to the current poision of another vertex, this function needs to be constructed dynamically.
+        Placeholder for `self.q()` as documented in `__init__()`.
         '''
-        raise NotImplementedError('Spring.p0() unimplemented')
+        raise NotImplementedError('Spring.q() unimplemented')
 
 
 if __name__ == '__main__':
-    c = Spring(k=1, L=1, p0=lambda: np.array([0, 0, 0]))
-    p = np.array([0.5, 0, 0])
-    q = c.project(p)
-    print(f"q= {q}")
+    q0 = np.array([0, 0, 0])
+    q1 = np.array([0.5, 0, 0])
+    c = Spring(k=1, L=1, q=lambda: [(q0, 0), (q1, 1)])
+    p = c.project()
+    d = la.norm(p[0][0] - p[1][0])
+    print(f"p = {p}, d = {d}")
