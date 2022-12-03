@@ -81,10 +81,10 @@ class System:
         Returns external forces applied to each vertex from outside the system.
         TODO: forces need to be parameterized instead of hardcoded.
         '''
-        gravity_force = np.array([np.array([0, 0, -0.1])] * self.q.shape[0])
-        # gravity_force = np.array(const.gravity_accelaration *
-        # self.q.shape[0]) # Alternative, which utilizes the scientific
-        # constant g.
+        gravity_force = np.array(
+            [const.gravity_acceleration] * self.q.shape[0])
+        gravity_force = (self.M @ gravity_force.reshape(-1)
+                         ).reshape(self.q.shape)
         damping_force = -0.5 * self.q1
         return gravity_force
 
