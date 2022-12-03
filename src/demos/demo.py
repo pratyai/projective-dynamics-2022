@@ -48,7 +48,7 @@ def play_system(s, save=None, nframes=900):
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
-    ax.set_aspect('equal')
+    ax.set_box_aspect([1, 1, 1])
 
     g = ax.scatter(s.q[:, 0], s.q[:, 1], s.q[:, 2], s=5 * np.diag(s.M)[::3])
 
