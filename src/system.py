@@ -1,4 +1,5 @@
 from constraints.spring import Spring
+from constraints.strain import Discrete
 import numpy as np
 import numpy.typing as npt
 import scipy.linalg as la
@@ -63,6 +64,18 @@ class System:
             assert 0 <= i < self.n
         assert indices[0] != indices[1]
         c = Spring(k, L, q=lambda: [(self.q[i], i) for i in indices])
+        self.cons.append(c)
+
+    def add_discrete_strain(self, ref: npt.NDArray, indices: list[int]):
+        '''
+        Construct and add a spring constraint to the system with the given parameters.
+        The indices refer to the vertices already present in the system.
+        '''
+        assert len(indices) == 3
+        assert indices[0] != indices[1]
+        assert indices[0] != indices[2]
+        assert indices[1] != indices[2]
+        c = Discrete(ref=ref, q=lambda: [(self.q[i], i) for i in indices])
         self.cons.append(c)
 
     def f_ext(self):

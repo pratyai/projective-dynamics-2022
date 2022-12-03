@@ -136,3 +136,13 @@ def make_triangle_mesh_system(
 
     # Return the system
     return s
+
+
+def make_a_three_point_strain_system():
+    q = np.array([[0, 0, 0], [0.25, 0, 0], [2.5, 2.5, 0]])
+    m = np.array([1, 1, 1])
+    s = msys.System(q=q, q1=None, M=np.kron(
+        np.diagflat(m), np.identity(msys.System.D)))
+    s.pinned.add(0)
+    s.add_discrete_strain(ref=q, indices=[0, 1, 2])
+    return s
