@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.typing as npt
 import constants as con
+import helpers as hlp
 
 
 #import openmesh as om
@@ -140,9 +141,9 @@ def make_triangle_mesh_system(
 
 def make_a_three_point_strain_system():
     q = np.array([[0, 0, 0], [0.25, 0, 0], [2.5, 2.5, 0]])
-    m = np.array([1, 1, 1])
-    s = msys.System(q=q, q1=None, M=np.kron(
-        np.diagflat(m), np.identity(msys.System.D)))
+    M = hlp.mass_matrix_fem_trimesh(q, indices=np.array([[0, 1, 2]]))
+    M = np.kron(M, np.identity(msys.System.D))
+    s = msys.System(q=q, q1=None, M=M)
     s.pinned.add(0)
     s.add_discrete_strain(ref=q, indices=[0, 1, 2])
     return s

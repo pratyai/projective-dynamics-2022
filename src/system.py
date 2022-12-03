@@ -51,8 +51,6 @@ class System:
         assert q.shape == (self.n, const.D)
         assert q1.shape == (self.n, const.D)
         assert M.shape == (self.n * const.D, self.n * const.D)
-        # Checking whether the M provided is diagonal.
-        assert np.count_nonzero(M - np.diag(np.diagonal(M, offset=0))) == 0
 
     def add_spring(self, k: float, L: float, indices: list[int]):
         '''
