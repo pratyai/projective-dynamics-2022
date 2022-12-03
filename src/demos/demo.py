@@ -114,7 +114,8 @@ if __name__ == '__main__':
         print(f'Will save {nframes} frams of the animation to {saveto}.')
         os.makedirs(os.path.dirname(saveto), exist_ok=True)
 
-    s = demos.make_a_three_point_strain_system()
+    # s = demos.make_a_three_point_strain_system()
+    s = demos.make_a_strain_grid_system()
     '''
     s = demos.make_triangle_mesh_system(
         meshfile, 1, 10) if meshfile is not None else demos.make_a_grid_system(

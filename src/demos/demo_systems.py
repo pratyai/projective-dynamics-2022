@@ -4,7 +4,7 @@ import constants as con
 import helpers as hlp
 
 
-#import openmesh as om
+# import openmesh as om
 
 import system as msys
 from enum import Enum, auto
@@ -146,4 +146,50 @@ def make_a_three_point_strain_system():
     s = msys.System(q=q, q1=None, M=M)
     s.pinned.add(0)
     s.add_discrete_strain(ref=q, indices=[0, 1, 2])
+    return s
+
+
+def make_a_strain_grid_system():
+    # a grid system with N * N points.
+    N = 10
+    L = 4
+
+    # create the points
+    x, y, z = np.meshgrid(np.linspace(-L / 2, L / 2, num=N),
+                          np.linspace(-L / 2, L / 2, num=N), [0])
+    q = np.vstack((x.reshape(-1), y.reshape(-1), z.reshape(-1))).T
+
+    # create the elements
+    def vtxid(i, j): return i * N + j
+
+    def neighbors(i, j): return [
+        (i - 1, j), (i, j + 1),
+        (i + 1, j + 1), (i + 1, j),
+        (i, j - 1), (i - 1, j - 1),
+    ]
+
+    def good(i, j): return (i >= 0 and i < N and j >= 0 and j < N)
+
+    tri = []
+    for i in range(N):
+        for j in range(N):
+            ns = neighbors(i, j)
+            for k1 in range(len(ns)):
+                k2 = (k1 + 1) % len(ns)
+                if not good(*ns[k1]) or not good(*ns[k2]):
+                    continue
+                tri.append([vtxid(i, j), vtxid(*ns[k1]), vtxid(*ns[k2])])
+    tri = np.array(tri)
+
+    # create the mass matrix
+    M = hlp.mass_matrix_fem_trimesh(q, indices=tri)
+    M = np.kron(M, np.identity(msys.System.D))
+
+    # create the system
+    s = msys.System(q=q, q1=None, M=M)
+    s.pinned.add(vtxid(N - 1, N - 1))
+    s.pinned.add(vtxid(N - 1, 0))
+    s.pinned.add(vtxid(0, N - 1))
+    for t in tri:
+        s.add_discrete_strain(ref=q[t, :], indices=t)
     return s
