@@ -93,7 +93,7 @@ def play_system(s, save=None, nframes=900):
         plt.show()
 
 
-if __name__ == '__main__':
+def main():
     argv = sys.argv[1:]
     saveto = None
     nframes = 900
@@ -122,3 +122,7 @@ if __name__ == '__main__':
         diagtype=demos.GridDiagonalDirection.TOPLEFT)
     '''
     play_system(s, save=saveto, nframes=nframes)
+
+
+if __name__ == '__main__':
+    main()
