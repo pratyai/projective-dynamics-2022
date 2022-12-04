@@ -7,3 +7,9 @@ __pycache__
 **/.polyscope.ini
 imgui.ini
 **/imgui.ini
+
+**/*.so
+**/*.c
+**/*.o
+
+**/*.mp4
