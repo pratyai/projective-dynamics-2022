@@ -25,7 +25,7 @@ class System:
             - D := dimensions of the problem. This D in practice is the global variable "D" included in the "constants" module.
                     Typically this would have the value of three ( D = 3) , as 3D environments are taken into consideration.
             - n := number of particles in the mass-spring system
-        cons := list of constraints associated with each q. TODO: Transform this into a 3D array/matrix (one selection array for each constraint)
+        cons := list of constraints. TODO: Transform this into a 3D array/matrix (one selection array for each constraint)
         pinned := set of vertices (referred to by indices) to be pinned in position.
                     Equivalently, the ids included in the "pinned" set will not be subjected to any constraint (no spring force will be applied to them).
         '''
@@ -43,7 +43,7 @@ class System:
         # j : the constraint id (to which point i is subjected)
         # This data structure (list of lists) keeps track of which particle (rows) is subject to which constraint (columns).
         # Initially, no particle (#particles = n) is constrained.
-        self.cons = [[] for i in range(self.n)]
+        self.cons = []
         self.pinned = set()
 
         # sanity checks
@@ -52,35 +52,18 @@ class System:
         assert M.shape == (self.n * const.D, self.n * const.D)
         # Checking whether the M provided is diagonal.
         assert np.count_nonzero(M - np.diag(np.diagonal(M, offset=0))) == 0
-        assert len(self.cons) == self.n
 
-    def add_spring(self, k: float, L: float, q_idx: int, p0_idx: int):
+    def add_spring(self, k: float, L: float, indices: list[int]):
         '''
         Construct and add a spring constraint to the system with the given parameters.
         The indices refer to the vertices already present in the system.
         '''
-        assert 0 <= q_idx < self.n and q_idx != p0_idx
-        c = Spring(k, L, p0=lambda: (self.q[p0_idx], p0_idx))
-        # Add Spring constraint to the "q_idx"-th particle.
-        # The p0 callable of the constraint returns the particle TO WHICH the "q_idx"-th particle is constrained.
-        # Alternatively, it can be imagined that the direction of spring force
-        # applied on the "q_idx"-th will be (p0 - q).
-        self.cons[q_idx].append(c)
-
-    def add_two_way_spring(self, k: float, L: float, q1_id: int, q2_id: int):
-        """
-        Construct and add two spring constraints to the system with the provided spring characteristics.
-        This function is closer to the intuitional way of looking at a spring: both end-points are pulled / pushed when the spring is extended / compressed.
-
-        Parameters
-        ----------
-        k := stiffness of the spring
-        L := rest length of the spring
-        q1_id := index in the "self.q" object. Refers to a point in the system.
-        q2_id :=    »   »   »   »       »       »       »       »       »
-        """
-        self.add_spring(k, L, q1_id, q2_id)
-        self.add_spring(k, L, q2_id, q1_id)
+        assert len(indices) == 2
+        for i in indices:
+            assert 0 <= i < self.n
+        assert indices[0] != indices[1]
+        c = Spring(k, L, q=lambda: [(self.q[i], i) for i in indices])
+        self.cons.append(c)
 
     def f_ext(self):
         '''
@@ -95,11 +78,11 @@ class System:
         return gravity_force
 
     def wAtA(self):
-        wAtA = [
-            np.sum([c.w * c.A.T @ c.A for c in self.cons[i]], axis=0)
-            if self.cons[i] else np.zeros((const.D, const.D))
-            for i in range(self.n)
-        ]
+        wAtA = np.zeros((self.n, const.D, const.D))
+        for c in self.cons:
+            c_wAtA = c.w * c.A.T @ c.A
+            for (q, idx) in c.q():
+                wAtA[idx, :] += c_wAtA
         # a giant matrix for all the points arranged in a block diagonal fashion,
         # since the different points' computations are independent (unless it
         # goes through a constraint).
@@ -125,12 +108,11 @@ class System:
         output[1] -> projection of point with id = 1 (vector)
         ...
         """
-        wAtBp = [
-            np.sum([c.w * c.A.T @ c.B @ c.project(self.q[i])
-                    for c in self.cons[i]], axis=0)
-            if self.cons[i] else np.zeros(const.D)
-            for i in range(self.n)
-        ]
+        wAtBp = np.zeros((self.n, const.D))
+        for c in self.cons:
+            wAtB = c.w * c.A.T @ c.B
+            for (p, idx) in c.project():
+                wAtBp[idx, :] += wAtB @ p
 
         # a giant stack of all the points' column vectors.
         return np.array(wAtBp)
@@ -209,7 +191,7 @@ if __name__ == '__main__':
         np.identity(q.shape[0]), np.identity(const.D)))
     # A spring force is applied to the particle with id = 1, relevant to the
     # position of the particle with id = 0.
-    s.add_spring(k=1, L=1, q_idx=1, p0_idx=0)
+    s.add_spring(k=1, L=1, indices=[0, 1])
     # Note: As there is no constraint on particle with id = 0, it is implied
     # that particle with id = 0 is fixed.
 

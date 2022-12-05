@@ -22,8 +22,9 @@ class Constraint:
         self.A = A
         self.B = B
 
-    def project(self, q: npt.NDArray):
+    def project(self):
         '''
-        "Project" a single point q on the constraint.
+        Return a list of tuples. Each tuple is of the form `(projected_point#i, index_of_point#i)`.
+        The list has the projections of all the vertices involved with this constraint.
         '''
         raise NotImplementedError('Constraint.project() unimplemented')

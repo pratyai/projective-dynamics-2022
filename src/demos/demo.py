@@ -16,6 +16,14 @@ import getopt
 import os
 
 
+def line_segs(c):
+    '''
+    Compute line segments to draw for constraint `c`.
+    '''
+    q = c.q()
+    return [q[0][0], q[1][0]]
+
+
 def updater(f, g, s, h, dt):
     for _ in range(int(np.ceil(dt / h))):
         s.step(h)
@@ -35,10 +43,7 @@ def play_system(s, save=None, nframes=900):
 
     g = ax.scatter(s.q[:, 0], s.q[:, 1], s.q[:, 2], s=5 * np.diag(s.M)[::3])
 
-    def comp_line_segs(): return np.array([[q, c.p0()[0]]
-                                           for (q, cs) in zip(s.q, s.cons)
-                                           for c in cs])
-    ls = comp_line_segs()
+    ls = np.array([line_segs(c) for c in s.cons])
     lc = Line3DCollection(ls)
     ax.add_collection(lc)
 
@@ -48,7 +53,7 @@ def play_system(s, save=None, nframes=900):
 
     def cb(f):
         updater(f, g, s, h, ival / 1000)
-        ls[:] = comp_line_segs()[:]
+        ls[:] = np.array([line_segs(c) for c in s.cons])
     ani = mani.FuncAnimation(
         fig, cb, frames=nframes, interval=ival)
     w = mani.FFMpegWriter(fps=30, bitrate=1800)

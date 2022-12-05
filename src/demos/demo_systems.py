@@ -27,7 +27,7 @@ def make_a_two_point_system():
     # the heavy one will be pinned at origin.
     s.pinned.add(0)
     # the light one will be tied to the heavy one with a spring.
-    s.add_spring(k=1, L=1, q_idx=1, p0_idx=0)
+    s.add_spring(k=1, L=1, indices=[0, 1])
     return s
 
 
@@ -46,10 +46,9 @@ def make_a_three_point_system():
     #             \   \
     #               id2
     # No force is applied on the particle with id = 0 (a.k.a. it is fixed).
-    s.add_spring(k=1, L=1, q_idx=1, p0_idx=0)
-    s.add_spring(k=1, L=1, q_idx=1, p0_idx=2)
-    s.add_spring(k=1, L=1, q_idx=2, p0_idx=0)
-    s.add_spring(k=1, L=1, q_idx=2, p0_idx=1)
+    s.add_spring(k=1, L=1, indices=[0, 1])
+    s.add_spring(k=1, L=1, indices=[1, 2])
+    s.add_spring(k=1, L=1, indices=[0, 2])
     return s
 
 
@@ -101,8 +100,8 @@ def make_a_grid_system(
                 if not (ni >= 0 and ni < N and nj >= 0 and nj < N):
                     # out of bounds
                     continue
-                s.add_spring(k=1, L=L / (N - 1), q_idx=vtxid(i, j),
-                             p0_idx=vtxid(ni, nj))
+                s.add_spring(k=1, L=L / (N - 1),
+                             indices=[vtxid(i, j), vtxid(ni, nj)])
     s.pinned.add(vtxid(N - 1, N - 1))
     s.pinned.add(vtxid(N - 1, 0))
     s.pinned.add(vtxid(0, N - 1))
@@ -132,9 +131,8 @@ def make_triangle_mesh_system(
         k = spring_stiffness  # Spring stiffness
         L = np.linalg.norm(v - u)  # Spring length
 
-        # Add springs between every two edges
-        s.add_spring(k=k, L=L, q_idx=i, p0_idx=j)
-        s.add_spring(k=k, L=L, q_idx=j, p0_idx=i)
+        # Add springs between every two vertices.
+        s.add_spring(k=k, L=L, indices=[i, j])
 
     # Return the system
     return s
