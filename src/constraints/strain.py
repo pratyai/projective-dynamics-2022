@@ -23,20 +23,22 @@ class Discrete(Constraint):
     This defines the initial configuration of any triangle.
     '''
 
-    def __init__(self, ref: npt.NDArray, q: callable, **kwargs):
+    def __init__(self, ref: npt.NDArray, q: callable, sigrange: tuple = (1, 1), **kwargs):
         '''
         Discrete strain constraint that always wants to have a certain length,
         which is a fixed distance away from the other end of the spring.
         ref := (3x3) matrix where `ref[i]` is i-th vertex of the triangle at resting config.
         q := a callable that returns a list of tuples. The list is of size 3,
              one tuple for each vertex of the triangle, each tuple of the form `(point#i, index_of_point#i)`.
+        sigrange := a 2-tuple for clipping the singular values when projecting.
         kwargs := remaining keyword argument
         '''
         super(Discrete, self).__init__(**kwargs)
         self.ref = ref
-        Xg, A = Discrete.config(ref)
+        Xg = Discrete.config(ref)
         self.invXg = la.pinv(Xg)
         self.q = q
+        self.sigmin, self.sigmax = sigrange
 
     def config(p: npt.NDArray):
         '''
@@ -49,8 +51,7 @@ class Discrete(Constraint):
         '''
         edge_01, edge_02 = p[1] - p[0], p[2] - p[0]
         X = np.array([edge_01, edge_02, [0, 0, 0]]).T
-        area_of_triangle = 0.5 * la.norm(np.cross(edge_01, edge_02))
-        return (X, area_of_triangle)
+        return X
 
     def project(self):
         '''
@@ -59,7 +60,7 @@ class Discrete(Constraint):
         Step 1) Get the center of gravity (CG) of the triangle. This CG will also be the CG of the projection.
                 NOTE: We will assume uniform density for now. This may make the simulation
                 unstable for ununiform density.
-        Step 2) Compute `U, S, Vh = svd(Xf @ inv(Xg))`.
+        Step 2) Compute `U, s, Vh = svd(Xf @ inv(Xg))`.
         Step 3) Compute `T`, the target transformation, by clipping the singular values appropriately.
         Step 4) Compute `p[i] = T @ ref[i]`.
         Step 5) Compute CG for the projection. Move `p[i]` to match the two CGs.
@@ -68,23 +69,24 @@ class Discrete(Constraint):
         q = self.q()
         assert len(q) == 3
         CG = np.sum([qi for (qi, idx) in q], axis=0) / 3
-        A, Xf, T = self.AXfT()
+        T = self.T()
         p = [(T @ self.ref[i, :], idx) for (i, (qi, idx)) in enumerate(q)]
         cg = np.sum([pi for (pi, idx) in p], axis=0) / 3
         p = [((CG - cg) + pi, idx) for (pi, idx) in p]
         return p
 
-    def AXfT(self):
+    def T(self):
+        '''
+        Find the appropriate transformation `T` that minimises the strain energy.
+        '''
         q = self.q()
         cur = np.array([qi for (qi, idx) in q])
-        Xf, A = Discrete.config(cur)
+        Xf = Discrete.config(cur)
         u, s, vh = la.svd(Xf @ self.invXg)
-        # print(f'u = {u}\ns = {s}\nvh = {vh}')
-        sigmin, sigmax = 1, 1
-        s = np.clip(s, sigmin, sigmax)
+        s = np.clip(s, self.sigmin, self.sigmax)
         S = np.diag(s)
         T = u @ S @ vh
-        return A, Xf, T
+        return T
 
     def q(self):
         '''
