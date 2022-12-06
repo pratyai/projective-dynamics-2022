@@ -23,7 +23,14 @@ class Discrete(Constraint):
     This defines the initial configuration of any triangle.
     '''
 
-    def __init__(self, ref: npt.NDArray, q: callable, sigrange: tuple = (1, 1), **kwargs):
+    def __init__(
+            self,
+            ref: npt.NDArray,
+            q: callable,
+            sigrange: tuple = (
+                1,
+                1),
+            **kwargs):
         '''
         Discrete strain constraint that always wants to have a certain length,
         which is a fixed distance away from the other end of the spring.

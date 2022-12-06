@@ -17,7 +17,7 @@ def tri_are(p: npt.NDArray):
     p := `3 x D(=3)` matrix, each row being one vertex of the triangle.
     '''
     e01, e02 = p[1, :] - p[0, :], p[2, :] - p[0, :]
-    return la.norm(np.cross(e01, e02))/2
+    return la.norm(np.cross(e01, e02)) / 2
 
 
 def mass_matrix_fem_trimesh(q: npt.NDArray, indices: npt.NDArray):
@@ -34,7 +34,7 @@ def mass_matrix_fem_trimesh(q: npt.NDArray, indices: npt.NDArray):
         p = q[tri, :]
         A = tri_are(p)
         # mass matrix of individual element.
-        m = np.array([[2, 1, 1], [1, 2, 1], [1, 1, 2]]) * A/12
+        m = np.array([[2, 1, 1], [1, 2, 1], [1, 1, 2]]) * A / 12
         # TODO: how to write it efficiently?
         for (i, r) in enumerate(tri):
             for (j, c) in enumerate(tri):

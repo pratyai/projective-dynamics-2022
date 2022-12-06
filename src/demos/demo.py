@@ -28,8 +28,8 @@ def line_segs(c):
     # print(f'q = {q}\np = {p}\nref = {c.ref}')
     # exit(0)
     return {
-        'current': [[q[i, :], q[j, :]] for i in range(n) for j in range(i+1, len(q))],
-        'project': [[p[i, :], p[j, :]] for i in range(len(p)) for j in range(i+1, len(p))],
+        'current': [[q[i, :], q[j, :]] for i in range(n) for j in range(i + 1, len(q))],
+        'project': [[p[i, :], p[j, :]] for i in range(len(p)) for j in range(i + 1, len(p))],
     }
 
 
