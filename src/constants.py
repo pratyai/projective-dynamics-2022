@@ -8,4 +8,4 @@ D = 3
 EPS = 1e-6
 
 # Standard acceleration of gravity
-gravity_acceleration = np.array([0, 0, scipy.constants.g])
+gravity_acceleration = np.array([0, 0, -scipy.constants.g]) / 20

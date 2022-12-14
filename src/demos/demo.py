@@ -19,9 +19,18 @@ import os
 def line_segs(c):
     '''
     Compute line segments to draw for constraint `c`.
+    There maybe different kinds of line segments that, for example, we want to draw with different
+    colours. So, just return a dictionary of lists, keys being the "group's name".
     '''
-    q = c.q()
-    return [q[0][0], q[1][0]]
+    n = len(c.q())
+    q = np.array([qi for (qi, idx) in c.q()])
+    p = np.array([pi for (pi, idx) in c.project()])
+    # print(f'q = {q}\np = {p}\nref = {c.ref}')
+    # exit(0)
+    return {
+        'current': [[q[i, :], q[j, :]] for i in range(n) for j in range(i + 1, len(q))],
+        'project': [[p[i, :], p[j, :]] for i in range(len(p)) for j in range(i + 1, len(p))],
+    }
 
 
 def updater(f, g, s, h, dt):
@@ -39,13 +48,27 @@ def play_system(s, save=None, nframes=900):
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
-    ax.set_aspect('equal')
+    ax.set_box_aspect([1, 1, 1])
 
     g = ax.scatter(s.q[:, 0], s.q[:, 1], s.q[:, 2], s=5 * np.diag(s.M)[::3])
 
-    ls = np.array([line_segs(c) for c in s.cons])
-    lc = Line3DCollection(ls)
-    ax.add_collection(lc)
+    ls = {}
+    for c in s.cons:
+        for (k, v) in line_segs(c).items():
+            if k not in ls:
+                ls[k] = []
+            ls[k] += v
+
+    COLORS = {'current': 'blue', 'project': 'red'}
+    LINEWIDTHS = {'current': 1.5, 'project': .5}
+    ZORDER = {'current': 2, 'project': 2.5}
+    for (k, v) in ls.items():
+        lc = Line3DCollection(v,
+                              colors=COLORS[k],
+                              linewidths=LINEWIDTHS[k],
+                              zorder=ZORDER[k],
+                              )
+        ax.add_collection(lc)
 
     h = 0.01
     fps = 30
@@ -53,7 +76,14 @@ def play_system(s, save=None, nframes=900):
 
     def cb(f):
         updater(f, g, s, h, ival / 1000)
-        ls[:] = np.array([line_segs(c) for c in s.cons])
+        nls = {}
+        for c in s.cons:
+            for (k, v) in line_segs(c).items():
+                if k not in nls:
+                    nls[k] = []
+                nls[k] += v
+        for k in ls.keys():
+            ls[k][:] = nls[k]
     ani = mani.FuncAnimation(
         fig, cb, frames=nframes, interval=ival)
     w = mani.FFMpegWriter(fps=30, bitrate=1800)
@@ -84,7 +114,11 @@ if __name__ == '__main__':
         print(f'Will save {nframes} frams of the animation to {saveto}.')
         os.makedirs(os.path.dirname(saveto), exist_ok=True)
 
+    # s = demos.make_a_three_point_strain_system()
+    s = demos.make_a_strain_grid_system()
+    '''
     s = demos.make_triangle_mesh_system(
         meshfile, 1, 10) if meshfile is not None else demos.make_a_grid_system(
         diagtype=demos.GridDiagonalDirection.TOPLEFT)
+    '''
     play_system(s, save=saveto, nframes=nframes)
