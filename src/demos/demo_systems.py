@@ -109,7 +109,7 @@ def make_a_grid_system(
     return s
 
 
-def make_triangle_mesh_system(
+def make_triangle_mesh_spring_system(
         mesh: None,
         point_mass: float,
         spring_stiffness: float):
@@ -192,4 +192,26 @@ def make_a_strain_grid_system():
     s.pinned.add(vtxid(0, N - 1))
     for t in tri:
         s.add_discrete_strain(ref=q[t, :], indices=t)
+    return s
+
+def make_triangle_mesh_strain_system(
+        mesh: None,
+        point_mass: float,
+        spring_stiffness: float):
+
+    q = mesh.points()  # The Vx3 configuration matrix
+    F = mesh.face_vertex_indices() # The Fx3 face-vertex-indices matrix
+    
+    # Create the mass matrix
+    M = hlp.mass_matrix_fem_trimesh(q, indices=F)
+    M = np.kron(M, np.identity(msys.System.D))
+    
+    # Create our system
+    s = msys.System(q=q, q1=None, M=M)
+    
+    # Add strain constraint for each triangle
+    for triangle in F:
+        s.add_discrete_strain(ref=q[triangle, :], indices=triangle)
+
+    # Return the system
     return s
