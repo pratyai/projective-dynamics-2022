@@ -52,6 +52,8 @@ class System:
         assert q1.shape == (self.n, const.D)
         assert M.shape == (self.n * const.D, self.n * const.D)
 
+        self.lhs_lu_pivot = None
+
     def add_spring(self, k: float, L: float, indices: list[int]):
         '''
         Construct and add a spring constraint to the system with the given parameters.
@@ -154,26 +156,30 @@ class System:
         # All the selection matrices were ignored using the block-diagonal constructions.
         # We know that constraints are not shared between vertices in our
         # current model.
-        wAtA = self.wAtA()
-        wAtBp = self.wAtBp()
-
         M_h2 = self.M / (h * h)
+        wAtBp = self.wAtBp()
         # s_n = q_n + h v_n + h^2 M^{−1} fext
         s = self.q + h * self.q1 + \
             (la.inv(M_h2) @ self.f_ext().reshape(-1)).reshape(self.q.shape)
-        # Writing the more readable form below in case we decided to utilize it. Needless to say, we would have to store M^{-1}
-        # Software-engineering-wise, the current implementation is better, as the same value (M / h^2) is used in lhs and rhs as well.
-        # s = self.q + h * self.q1 + \
-        # (h**2 * la.inv(M) @ self.f_ext().reshape(-1)).reshape(self.q.shape)
 
-        lhs = M_h2 + wAtA  # w A' A is already in matrix form (3n x 3n)
+        if self.lhs_lu_pivot is None:
+            wAtA = self.wAtA()
+
+            # Writing the more readable form below in case we decided to utilize it. Needless to say, we would have to store M^{-1}
+            # Software-engineering-wise, the current implementation is better, as the same value (M / h^2) is used in lhs and rhs as well.
+            # s = self.q + h * self.q1 + \
+            # (h**2 * la.inv(M) @ self.f_ext().reshape(-1)).reshape(self.q.shape)
+
+            lhs = M_h2 + wAtA  # w A' A is already in matrix form (3n x 3n)
+            self.lhs_lu_pivot = la.lu_factor(lhs)
         # M/h^2 (3n x 3n) . s (n x 3) --reshape-->  M/h^2 (3n x 3n) . s (3n x
         # 1) --result--> 3n x 1
         rhs = M_h2 @ s.reshape(-1) + wAtBp.reshape(-1)
 
         # After solving the linear system, revert the dimensions of the output
         # into n x 3.
-        q = la.solve(lhs, rhs).reshape(self.q.shape)
+        q = la.lu_solve(self.lhs_lu_pivot, rhs, overwrite_b=True,
+                        check_finite=False).reshape(self.q.shape)
         # pin these vertices
         q[list(self.pinned), :] = self.q[list(self.pinned), :]
         # After computing the next position of the particles, we may trivially acquire the velocities of the particle in the next time step.
