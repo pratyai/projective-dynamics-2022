@@ -2,9 +2,7 @@ import numpy as np
 import numpy.typing as npt
 import constants as con
 import helpers as hlp
-
-
-# import openmesh as om
+from typing import List, Tuple
 
 import system as msys
 from enum import Enum, auto
@@ -196,14 +194,15 @@ def make_a_strain_grid_system():
 
 def make_triangle_mesh_strain_system(
         mesh: None,
-        point_mass: float,
-        spring_stiffness: float):
+        mass_matrix_scalar: float,
+        singular_values_range: Tuple[float],
+        pinned_indices: List[int]):
 
     q = mesh.points()  # The Vx3 configuration matrix
     F = mesh.face_vertex_indices() # The Fx3 face-vertex-indices matrix
     
     # Create the mass matrix
-    M = hlp.mass_matrix_fem_trimesh(q, indices=F)
+    M = mass_matrix_scalar * hlp.mass_matrix_fem_trimesh(q, indices=F) 
     M = np.kron(M, np.identity(msys.System.D))
     
     # Create our system
@@ -211,7 +210,11 @@ def make_triangle_mesh_strain_system(
     
     # Add strain constraint for each triangle
     for triangle in F:
-        s.add_discrete_strain(ref=q[triangle, :], indices=triangle)
+        s.add_discrete_strain(ref=q[triangle, :], indices=triangle, sigrange=singular_values_range)
+
+    # Pin the specified vertices
+    for pin_index in pinned_indices:
+        s.pinned.add(pin_index)
 
     # Return the system
     return s

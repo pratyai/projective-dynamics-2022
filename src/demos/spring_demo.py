@@ -36,8 +36,8 @@ def ui_system_parameters(state: dict):
     """
     System parameters section of the UI.
     """
-    if (psim.TreeNodeEx("System Parameters",
-                        flags=psim.ImGuiTreeNodeFlags_DefaultOpen)):
+    if(psim.TreeNodeEx("System Parameters",
+                       flags=psim.ImGuiTreeNodeFlags_DefaultOpen)):
 
         # Reset simulation button
         if (psim.Button("Reset")):
@@ -91,7 +91,7 @@ def _initialize_system(state: dict):
     """
     Initialize the system with specified point mass and spring stiffness
     """
-    state['system'] = demo_systems.make_triangle_mesh_strain_system(
+    state['system'] = demo_systems.make_triangle_mesh_spring_system(
         state['mesh'], state['ui_point_mass'], state['ui_spring_stiffness'])
 
 
@@ -131,23 +131,21 @@ def _initialize_polyscope_mesh(state: dict):
     Initialize the polyscope mesh to be a curve network where each edge corresponds to a spring in our system.
     """
     system = state['system']
-    mesh = state['mesh']
     edges = np.array([edge(c) for c in system.cons])
-    state['ps_mesh'] = ps.register_surface_mesh(
-        name='ps_mesh', vertices=mesh.points(), faces=mesh.face_vertex_indices())
+    state['ps_mesh'] = ps.register_curve_network(
+        name='ps_mesh', nodes=system.q, edges=edges)
 
 
 def _update_polyscope_mesh(state: dict):
     """
     Update the polyscope curve network according to the current vertex positions of the system.
     """
-    state['ps_mesh'].update_vertex_positions(state['system'].q)
+    state['ps_mesh'].update_node_positions(state['system'].q)
 
 
-def main(args: dict):
+def main(args: argparse.Namespace):
     """
     Creates a Polyscope application visualizing a mass-spring system simulated using projective dynamics.
-
     Parameters:
         filename (str): filename of the triangle mesh used to initialize the mass-spring system
     """
@@ -203,15 +201,15 @@ if __name__ == '__main__':
                         help="the input mesh filename",
                         type=str)
     
-    # Optional argument to screen 
+    # Optional argument to record the application screen
     parser.add_argument("--record", 
                         help="whether or not to record the application screen",
                         action="store_true")
 
     # Parse the command line arguments
     args = parser.parse_args()
-    
-    # Pass the args to our main function
+
+    # Pass the filename to our main function
     main(args)
     
     # Optionally record the application screen
