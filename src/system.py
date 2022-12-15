@@ -4,6 +4,7 @@ import numpy as np
 import numpy.typing as npt
 import scipy.linalg as la
 import constants as const
+from typing import List
 
 
 class System:
@@ -54,7 +55,7 @@ class System:
 
         self.lhs_lu_pivot = None
 
-    def add_spring(self, k: float, L: float, indices: list[int]):
+    def add_spring(self, k: float, L: float, indices: List[int]):
         '''
         Construct and add a spring constraint to the system with the given parameters.
         The indices refer to the vertices already present in the system.
@@ -66,7 +67,7 @@ class System:
         c = Spring(k, L, q=lambda: [(self.q[i], i) for i in indices])
         self.cons.append(c)
 
-    def add_discrete_strain(self, ref: npt.NDArray, indices: list[int]):
+    def add_discrete_strain(self, ref: npt.NDArray, indices: List[int]):
         '''
         Construct and add a spring constraint to the system with the given parameters.
         The indices refer to the vertices already present in the system.

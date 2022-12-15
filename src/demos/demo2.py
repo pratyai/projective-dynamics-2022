@@ -189,6 +189,10 @@ def main(args: dict):
     # Pass control flow to polyscope, displaying the interactive window
     ps.show()
 
+    subprocess.run(
+        f"mkdir -p ../demos/ &&ffmpeg -y -framerate 30 -pattern_type glob -i 'screenshot_*.png' -c:v libx264 -pix_fmt yuv420p ../demos/{os.path.basename(filename)}.mp4 && rm screenshot_*.png",
+        shell=True)
+
 
 if __name__ == '__main__':
     """
