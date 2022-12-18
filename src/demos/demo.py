@@ -5,15 +5,17 @@ $ python3 -m demos.demo
 To save:
 $ python3 -m demos.demo -w ../demos/mpl-demo.mp4
 '''
+import sys
+import getopt
+import os
+import time
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as mani
 import system as msys
 from . import demo_systems as demos
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
-import sys
-import getopt
-import os
 
 
 def line_segs(c):
@@ -34,8 +36,12 @@ def line_segs(c):
 
 
 def updater(f, g, s, h, dt):
-    for _ in range(int(np.ceil(dt / h))):
+    t0 = time.perf_counter()
+    n = int(np.ceil(dt / h))
+    for _ in range(n):
         s.step(h)
+    t1 = time.perf_counter()
+    print(f'step time ~ {(t1 - t0)/n}')
     g._offsets3d = (s.q[:, 0], s.q[:, 1], s.q[:, 2])
 
 
