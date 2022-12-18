@@ -20,11 +20,11 @@ def make_a_two_point_system():
     s = msys.System(q=q, q1=None, M=M)
     # Keeping the old implementation here as well in case of disagreement.
     # s = msys.System(q=q, q1=None, M=np.kron(``
-    #     np.diagflat(m), np.identity(msys.System.D)))
+    #     np.diagflat(m), np.identity(con.D)))
     # the heavy one will be pinned at origin.
     # m = np.array([10, 1])
     # s = msys.System(q=q, q1=None, M=np.kron(
-    #     np.diagflat(m), np.identity(msys.System.D)))
+    #     np.diagflat(m), np.identity(con.D)))
     # the heavy one will be pinned at origin.
     s.pinned.add(0)
     # the light one will be tied to the heavy one with a spring.
@@ -36,7 +36,7 @@ def make_a_three_point_system():
     q = np.array([[0, 0, 0], [0.25, 0, 0], [2.5, 2.5, 0]])
     m = np.array([10, 1, 1])
     s = msys.System(q=q, q1=None, M=np.kron(
-        np.diagflat(m), np.identity(msys.System.D)))
+        np.diagflat(m), np.identity(con.D)))
     # the heavy one will be pinned at origin.
     s.pinned.add(0)
     # the light ones will be tied to the other two with springs.
@@ -71,7 +71,7 @@ def make_a_grid_system(
     q = np.vstack((x.reshape(-1), y.reshape(-1), z.reshape(-1))).T
     m = np.ones(q.shape[0]) * M / (N * N)
     s = msys.System(q=q, q1=None, M=np.kron(
-        np.diagflat(m), np.identity(msys.System.D)))
+        np.diagflat(m), np.identity(con.D)))
 
     def vtxid(i, j): return i * N + j
 
@@ -117,7 +117,7 @@ def make_triangle_mesh_system(
     q = mesh.points()  # The Vx3 configuration matrix
     V = mesh.points().shape[0]  # V
     m = np.ones(q.shape[0]) / V * point_mass  # Vx1 mass per point matrix
-    M = np.kron(np.diagflat(m), np.identity(msys.System.D))  # VxV mass matrix
+    M = np.kron(np.diagflat(m), np.identity(con.D))  # VxV mass matrix
 
     # Create our system
     s = msys.System(q=q, q1=None, M=M)
@@ -142,7 +142,7 @@ def make_triangle_mesh_system(
 def make_a_three_point_strain_system():
     q = np.array([[0, 0, 0], [0.25, 0, 0], [2.5, 2.5, 0]])
     M = hlp.mass_matrix_fem_trimesh(q, indices=np.array([[0, 1, 2]]))
-    M = np.kron(M, np.identity(msys.System.D))
+    M = np.kron(M, np.identity(con.D))
     s = msys.System(q=q, q1=None, M=M)
     s.pinned.add(0)
     s.add_discrete_strain(ref=q, indices=[0, 1, 2])
@@ -183,7 +183,7 @@ def make_a_strain_grid_system():
 
     # create the mass matrix
     M = hlp.mass_matrix_fem_trimesh(q, indices=tri)
-    M = np.kron(M, np.identity(msys.System.D))
+    M = np.kron(M, np.identity(con.D))
 
     # create the system
     s = msys.System(q=q, q1=None, M=M)

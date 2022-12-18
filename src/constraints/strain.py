@@ -12,6 +12,7 @@ import numpy as np
 import numpy.typing as npt
 import numpy.linalg as la
 import helpers as hlp
+import numba as nb
 
 
 class Discrete(Constraint):
@@ -42,12 +43,14 @@ class Discrete(Constraint):
         '''
         super(Discrete, self).__init__(**kwargs)
         self.ref = ref
-        Xg = Discrete.config(ref)
+        Xg = Discrete.config(ref[0], ref[1], ref[2])
         self.invXg = la.pinv(Xg)
         self.q = q
         self.sigmin, self.sigmax = sigrange
 
-    def config(p: npt.NDArray):
+    @staticmethod
+    @nb.njit
+    def config(p0, p1, p2):
         '''
         Returns the "configuration" of the triangle, i.e. the X_{g/f} matrix from the paper.
         p := a (3x3) matrix, p[i, :] being i-th vertex of the triangle.
@@ -56,8 +59,9 @@ class Discrete(Constraint):
         Turns out, the (3x3) matrix of [p1 - p0, p2 - p0, 0].T works just fine, since it does give
         a valid transformation, and we're computing SVD and clipping the singular values anyway.
         '''
-        edge_01, edge_02 = p[1] - p[0], p[2] - p[0]
-        X = np.array([edge_01, edge_02, [0, 0, 0]]).T
+        X = np.zeros((3, 3))
+        X[:, 0] = p1 - p0
+        X[:, 1] = p2 - p0
         return X
 
     def project(self):
@@ -82,17 +86,25 @@ class Discrete(Constraint):
         p = [((CG - cg) + pi, idx) for (pi, idx) in p]
         return p
 
+    @staticmethod
+    @nb.njit
+    def _T(invXg, sigmin, sigmax, Xf):
+        '''
+        Find the appropriate transformation `T` that minimises the strain energy.
+        '''
+        u, s, vh = la.svd(Xf @ invXg)
+        s = np.clip(s, sigmin, sigmax)
+        S = np.diag(s)
+        T = u @ S @ vh
+        return T
+
     def T(self):
         '''
         Find the appropriate transformation `T` that minimises the strain energy.
         '''
         q = self.q()
-        cur = np.array([qi for (qi, idx) in q])
-        Xf = Discrete.config(cur)
-        u, s, vh = la.svd(Xf @ self.invXg)
-        s = np.clip(s, self.sigmin, self.sigmax)
-        S = np.diag(s)
-        T = u @ S @ vh
+        Xf = Discrete.config(q[0][0], q[1][0], q[2][0])
+        T = Discrete._T(self.invXg, self.sigmin, self.sigmax, Xf)
         return T
 
     def q(self):
