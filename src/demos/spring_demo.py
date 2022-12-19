@@ -40,7 +40,7 @@ def ui_system_parameters(state: dict):
                        flags=psim.ImGuiTreeNodeFlags_DefaultOpen)):
 
         # Reset simulation button
-        if (psim.Button("Reset")):
+        if (psim.Button("Initialize / Reset")):
             state['ui_is_running'] = False
             _initialize_system(state)
             _update_polyscope_mesh(state)
@@ -56,8 +56,14 @@ def ui_system_parameters(state: dict):
         psim.PopItemWidth()
 
         # Pin selected nodes
-        if (psim.Button("Pin Selection")):
+        if (psim.Button("Pin Selected Vertex")):
             _pin_selected_nodes(state)
+        pinned_indices = sorted(state['ui_pinned_indices'])
+        if pinned_indices:
+            psim.SameLine()
+            if (psim.Button("Clear Selection")):
+                state['ui_pinned_indices'].clear()
+            psim.TextUnformatted("{}".format(pinned_indices))
 
         psim.TreePop()
 
@@ -92,7 +98,7 @@ def _initialize_system(state: dict):
     Initialize the system with specified point mass and spring stiffness
     """
     state['system'] = demo_systems.make_triangle_mesh_spring_system(
-        state['mesh'], state['ui_point_mass'], state['ui_spring_stiffness'])
+        state['mesh'], state['ui_point_mass'], state['ui_spring_stiffness'], state['ui_pinned_indices'])
 
 
 def _update_system(state: dict):
@@ -115,7 +121,7 @@ def _pin_selected_nodes(state: dict):
     ps_mesh, element_index = ps.get_selection()
 
     # And pin the corresponding vertex
-    state['system'].pinned.add(element_index)
+    state['ui_pinned_indices'].append(element_index)
 
 
 def edge(c):
@@ -171,6 +177,7 @@ def main(args: argparse.Namespace):
         'system': None,
         'ui_point_mass': 1,
         'ui_spring_stiffness': 1,
+        'ui_pinned_indices': [],
         'ps_mesh': None,
         'ui_is_running': False,
         'ui_h': 0.01,

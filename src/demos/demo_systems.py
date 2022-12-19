@@ -110,7 +110,8 @@ def make_a_grid_system(
 def make_triangle_mesh_spring_system(
         mesh: None,
         point_mass: float,
-        spring_stiffness: float):
+        spring_stiffness: float,
+        pinned_indices: List[int]):
 
     q = mesh.points()  # The Vx3 configuration matrix
     V = mesh.points().shape[0]  # V
@@ -132,6 +133,10 @@ def make_triangle_mesh_spring_system(
 
         # Add springs between every two vertices.
         s.add_spring(k=k, L=L, indices=[i, j])
+    
+    # Pin the specified vertices
+    for pin_index in pinned_indices:
+        s.pinned.add(pin_index)
 
     # Return the system
     return s
