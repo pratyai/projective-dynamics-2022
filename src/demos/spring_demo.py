@@ -98,7 +98,10 @@ def _initialize_system(state: dict):
     Initialize the system with specified point mass and spring stiffness
     """
     state['system'] = demo_systems.make_triangle_mesh_spring_system(
-        state['mesh'], state['ui_point_mass'], state['ui_spring_stiffness'], state['ui_pinned_indices'])
+        state['mesh'],
+        state['ui_point_mass'],
+        state['ui_spring_stiffness'],
+        state['ui_pinned_indices'])
 
 
 def _update_system(state: dict):
@@ -182,7 +185,7 @@ def main(args: argparse.Namespace):
         'ui_is_running': False,
         'ui_h': 0.01,
         'ui_steps_per_frame': 10,
-        'record' : args.record
+        'record': args.record
     }
     # Initialize the system and polysope mesh
     _initialize_system(state)
@@ -207,9 +210,9 @@ if __name__ == '__main__':
     parser.add_argument("filename",
                         help="the input mesh filename",
                         type=str)
-    
+
     # Optional argument to record the application screen
-    parser.add_argument("--record", 
+    parser.add_argument("--record",
                         help="whether or not to record the application screen",
                         action="store_true")
 
@@ -218,7 +221,7 @@ if __name__ == '__main__':
 
     # Pass the filename to our main function
     main(args)
-    
+
     # Optionally record the application screen
     if (args.record):
         subprocess.run(

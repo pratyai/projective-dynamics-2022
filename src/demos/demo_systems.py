@@ -133,7 +133,7 @@ def make_triangle_mesh_spring_system(
 
         # Add springs between every two vertices.
         s.add_spring(k=k, L=L, indices=[i, j])
-    
+
     # Pin the specified vertices
     for pin_index in pinned_indices:
         s.pinned.add(pin_index)
@@ -197,6 +197,7 @@ def make_a_strain_grid_system():
         s.add_discrete_strain(ref=q[t, :], indices=t)
     return s
 
+
 def make_triangle_mesh_strain_system(
         mesh: None,
         mass_matrix_scalar: float,
@@ -204,18 +205,19 @@ def make_triangle_mesh_strain_system(
         pinned_indices: List[int]):
 
     q = mesh.points()  # The Vx3 configuration matrix
-    F = mesh.face_vertex_indices() # The Fx3 face-vertex-indices matrix
-    
+    F = mesh.face_vertex_indices()  # The Fx3 face-vertex-indices matrix
+
     # Create the mass matrix
-    M = mass_matrix_scalar * hlp.mass_matrix_fem_trimesh(q, indices=F) 
+    M = mass_matrix_scalar * hlp.mass_matrix_fem_trimesh(q, indices=F)
     M = np.kron(M, np.identity(msys.System.D))
-    
+
     # Create our system
     s = msys.System(q=q, q1=None, M=M)
-    
+
     # Add strain constraint for each triangle
     for triangle in F:
-        s.add_discrete_strain(ref=q[triangle, :], indices=triangle, sigrange=singular_values_range)
+        s.add_discrete_strain(
+            ref=q[triangle, :], indices=triangle, sigrange=singular_values_range)
 
     # Pin the specified vertices
     for pin_index in pinned_indices:

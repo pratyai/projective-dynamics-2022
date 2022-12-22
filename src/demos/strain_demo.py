@@ -100,7 +100,10 @@ def _initialize_system(state: dict):
     epsilon = state['ui_singular_values_epsilon']
     singular_values_range = (1 - epsilon, 1 + epsilon)
     state['system'] = demo_systems.make_triangle_mesh_strain_system(
-        state['mesh'], state['ui_mass_matrix_scalar'], singular_values_range, state['ui_pinned_indices'])
+        state['mesh'],
+        state['ui_mass_matrix_scalar'],
+        singular_values_range,
+        state['ui_pinned_indices'])
 
 
 def _update_system(state: dict):
@@ -141,7 +144,9 @@ def _initialize_polyscope_mesh(state: dict):
     system = state['system']
     mesh = state['mesh']
     state['ps_mesh'] = ps.register_surface_mesh(
-        name='ps_mesh', vertices=mesh.points(), faces=mesh.face_vertex_indices())
+        name='ps_mesh',
+        vertices=mesh.points(),
+        faces=mesh.face_vertex_indices())
     state['ps_mesh'].set_edge_width(1)
 
 
@@ -186,7 +191,7 @@ def main(args: argparse.Namespace):
         'ui_is_running': False,
         'ui_h': 0.01,
         'ui_steps_per_frame': 10,
-        'record' : args.record
+        'record': args.record
     }
     # Initialize the system and polysope mesh
     _initialize_system(state)
@@ -211,18 +216,18 @@ if __name__ == '__main__':
     parser.add_argument("filename",
                         help="the input mesh filename",
                         type=str)
-    
+
     # Optional argument to record the application screen
-    parser.add_argument("--record", 
+    parser.add_argument("--record",
                         help="whether or not to record the application screen",
                         action="store_true")
 
     # Parse the command line arguments
     args = parser.parse_args()
-    
+
     # Pass the args to our main function
     main(args)
-    
+
     # Optionally record the application screen
     if (args.record):
         subprocess.run(
