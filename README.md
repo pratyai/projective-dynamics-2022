@@ -1,38 +1,81 @@
-# projective-dynamics-2022
+# Cloth Simulation with Projective Dynamics
+
+Pratyai Mazumder, Tal Rastopchin, Konstantinos Stavratis
+
+A implementation of cloth simulation using projective dynamics; written in Python. Created as the final project of the Physically-Based Simulation in Computer Graphics course at ETH Zürich the fall of 2022.
+
+## How to Run
+
+The two demo programs that we have put together are `src/demos/spring_demo.py` and `src/demos/strain_demo.py`. Each demo program reads a .obj triangle mesh and allows the user to interactively model cloth simulation. The `spring_demo` models the cloth with a mass-spring system and the `strain_demo` models the cloth as a triangle mesh with a continuous strain energy.
+
+### Prerequisites
+
+Your local Python environment requires the following libraries to run our demos:
+
+* [Numba](https://numba.pydata.org/)
+* [NumPy](https://numpy.org/)
+* [OpenMesh](https://pypi.org/project/openmesh/)
+* [Polyscope](https://polyscope.run/py/)
+* [SciPy](https://scipy.org/)
+
+### `spring_demo`
+From within the `src` directory, we run the `spring_demo` with the input triangle mesh `data/square_100_unstructured.obj` as follows:
+
+```
+python -m demos.spring_demo ../data/square_100_unstructured.obj
+```
+(You might need to find the Polyscope application window after the program starts.) Hovering over the `controls` button of the `Polyscope` panel on the left-hand side of the application explains view and menu navigation. All of the panels on the left-hand side of the application allow the user to change how the 3D scene looks.
+
+The `Command UI` panel on the right-hand side of the screen allows the user to control the cloth simulation.
+
+#### System Parameters
+
+The system parameters subpanel allows the user to control the simulation's underlying system parameters.
+
+1. The `Initialize / reset` button both applies the specified system parameters as well as reset's the simulation. This means that every time after the user changes the point mass, spring stiffness, or pinned vertices, **this button must be clicked to update the system and apply the parameters.**
+
+2. The `Point mass` float input field allows the user to specify a scalar coefficient for the mass of each point. (This value is used as a scalar during the construction of the underlying system's lumped mass matrix.)
+
+3. The `Spring Stiffness` float input field allows the user to specify the spring stiffness constant `k` used for every spring in the system.
+
+4. The `Pin Selected Vertex` button allows the user to click on vertices and mark them as pinned. To do this, the user must left-click on a vertex. **Note: it is important that the `Selection` panel that pops up under the `Command UI` panel specify that the selection is a *`node`* and not an *`edge`***. After selecting a vertex, the user can then click `Pin Selected Vertex` and it will get added to the list of pinned vertices. The user can see the indices of the pinned vertices displayed underneath the `Pin Selected Vertex` button. To the right of the button there is a `Clear Selection` button which clears the list of pinned vertices.
+
+#### Simulation Control
+
+The simulation control subpanel allows the user to control the simulation.
+
+1. The `Start` / `Stop` button start and stop the simulation, respectively.
+
+2. The `Step size` float input field allows the user to specify the implicit Euler step size `h`. The default value of `0.01` seems to work well.
+
+3. The `Steps per frame` integer input field allows the user to specify the number of projective dynamics implicit Euler steps to take each frame. The default value of `10` seems to work well. (Any smaller value and the application slows down due to the overhead of copying the vertex positions from our system's representation to Polyscope's curve network representation.)
+
+### `strain_demo`
+
+From within the `src` directory, we run the `strain_demo` with the input triangle mesh `data/square_100_unstructured.obj` as follows:
+
+```
+python -m demos.strain_demo ../data/square_100_unstructured.obj
+```
+
+The `Command UI` panel on the right-hand side of the screen allows the user to control the cloth simulation.
+
+#### System Parameters
+
+The system parameters subpanel allows the user to control the simulation's underlying system parameters.
+
+1. The `Initialize / reset` button is identical to that of the `spring_demo`.
+
+2. The `Point mass` float input field is identical to that of the `spring_demo`.
+
+3. The `Singular values epsilon` float input field allows the user to specify "how much triangles can stretch past the strain constraint being locally satisfied". (Behind the scenes projective dynamics uses singular value decomposition (SVD) to "project" the current configuration of a triangle onto the constraint maniold SO(3). To ensure the rotation matrix (orthonormal matrix in the SVD) is in fact orthnormal, we clip the singular values to the range [1, 1]. The epislon value is used to clip the singular values to [1 - epsilon, 1 + epsilon], allowing isotropic strain limiting where the strain constraint now is not binary and has a controllable epsilon threshold for "how much the constraint needs to be satisfied.")
+
+4. The `Pin Selected Vertex` button is identical to that of the `spring_demo`. The only difference is that when selecting a vertex, **that the `Selection` panel that pops up under the `Command UI` panel specify that the selection is a *`vertex`* and no other halfedge mesh element**.
+
+#### Simulation Control
+
+The simulation control subpanel is identical to that of the `spring_demo`.
 
 ## References
-* http://www.projectivedynamics.org
 
-## How to run
-
-1. `cd` to `src/`.
-1. If you want the `matplotlib` UI, then run `python3 -m demos.demo`.
-1. If you want the `polyscope` UI, then run `python3 -m demos.demo2`.
-
-## API guideline
-
-### General
-All the python code here are to be used as a reference implementation, prioritizing ease-of-understanding over performance. So, occasionally a somewhat suboptimal way to implement things is acceptable as long it's correct -- although there is no need to deliberately unoptimize an otherwise easy piece of code.
-
-If the python implementation turns out to be poor even with reasonable optimization without losing its readability, we *may* choose to have a second implementation focusing on performance while keeping the first one as a reference.
-
-### Constraints
-Check the class `Constraint` in `src/constraint.py` for the interface and derivations of it for the various implementations.
-
-Constraints are to yield the projections of the input point on some geometric manifold. So, the `Constraint` interface offers only a `project()` method to compute that projected point. Additionally it offers the per-constraint parameters `w`, `A`, and `B`.
-
-The implementations of various constraints should live in `src/` (e.g. currently `src/spring.py` is there). In principle, constraints *should not* be aware of the global state of the system, although they can accept callables that can yield information that is only available in the global state (e.g. for spring constraint, the position of the other end of the spring is another vertex on the system).
-
-### System
-Check the class `System` in `src/system.py`.
-
-It keeps track of various constraints, asks them for the local solutions, and computes the global solution.
-
----
-
-# TODO
-
-1. Figure out why our one dimensional test case is failing.
-2. Come up with a set of unit tests to verify our code.
-3. Create a class to streamline scene setup. Pass different scenes very quickly to try out different simulation scenarios.
-4. Add some sort of method to the System class that ouputs "debug primitives" to pass to Polyscope.
+1. Sofien Bouaziz et al. 2014. Projective dynamics: fusing constraint projections for fast simulation. [https://www.projectivedynamics.org/projectivedynamics.pdf](https://www.projectivedynamics.org/projectivedynamics.pdf)
