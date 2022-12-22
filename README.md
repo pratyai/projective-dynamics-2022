@@ -64,13 +64,11 @@ The `Command UI` panel on the right-hand side of the screen allows the user to c
 
 The system parameters subpanel allows the user to control the simulation's underlying system parameters.
 
-1. The `Initialize / reset` button is identical to that of the `spring_demo`.
+1. The `Initialize / reset` button and `Point mass` float input field are identical to that of the `spring_demo`.
 
-2. The `Point mass` float input field is identical to that of the `spring_demo`.
+2. The `Singular values epsilon` float input field allows the user to specify "how much triangles can stretch past the strain constraint being locally satisfied". (Behind the scenes projective dynamics uses singular value decomposition (SVD) to "project" the current configuration of a triangle onto the constraint maniold SO(3). To ensure the rotation matrix (orthonormal matrix in the SVD) is in fact orthnormal, we clip the singular values to the range [1, 1]. The epislon value is used to clip the singular values to [1 - epsilon, 1 + epsilon], allowing isotropic strain limiting where the strain constraint now is not binary and has a controllable epsilon threshold for "how much the constraint needs to be satisfied.")
 
-3. The `Singular values epsilon` float input field allows the user to specify "how much triangles can stretch past the strain constraint being locally satisfied". (Behind the scenes projective dynamics uses singular value decomposition (SVD) to "project" the current configuration of a triangle onto the constraint maniold SO(3). To ensure the rotation matrix (orthonormal matrix in the SVD) is in fact orthnormal, we clip the singular values to the range [1, 1]. The epislon value is used to clip the singular values to [1 - epsilon, 1 + epsilon], allowing isotropic strain limiting where the strain constraint now is not binary and has a controllable epsilon threshold for "how much the constraint needs to be satisfied.")
-
-4. The `Pin Selected Vertex` button is identical to that of the `spring_demo`. The only difference is that when selecting a vertex, **that the `Selection` panel that pops up under the `Command UI` panel specify that the selection is a *`vertex`* and no other halfedge mesh element**.
+3. The `Pin Selected Vertex` button is identical to that of the `spring_demo`. The only difference is that when selecting a vertex, **that the `Selection` panel that pops up under the `Command UI` panel specify that the selection is a *`vertex`* and no other halfedge mesh element**.
 
 #### Simulation Control
 
