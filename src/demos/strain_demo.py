@@ -28,7 +28,8 @@ def ui_callback(state: dict):
     if state['ui_is_running']:
         _update_system(state)
         _update_polyscope_mesh(state)
-        ps.screenshot(transparent_bg=True)
+        if (state['record']):
+            ps.screenshot(transparent_bg=False)
 
 
 def ui_system_parameters(state: dict):
@@ -38,25 +39,31 @@ def ui_system_parameters(state: dict):
     if (psim.TreeNodeEx("System Parameters",
                         flags=psim.ImGuiTreeNodeFlags_DefaultOpen)):
 
-        # Reset simulation button
-        if (psim.Button("Reset")):
+        # Initialize / reset simulation button
+        if (psim.Button("Initialize / Reset")):
             state['ui_is_running'] = False
             _initialize_system(state)
             _update_polyscope_mesh(state)
 
         psim.PushItemWidth(MY_ITEM_WIDTH)
         # Point mass float input
-        changed, state['ui_point_mass'] = psim.InputFloat(
-            "Point mass", state['ui_point_mass'])
+        changed, state['ui_mass_matrix_scalar'] = psim.InputFloat(
+            "Point mass", state['ui_mass_matrix_scalar'])
 
         # Spring stiffness float input
-        changed, state['ui_spring_stiffness'] = psim.InputFloat(
-            "Spring stiffness", state['ui_spring_stiffness'])
+        changed, state['ui_singular_values_epsilon'] = psim.SliderFloat(
+            "Singular values epsilon", state['ui_singular_values_epsilon'], v_min=0, v_max=1)
         psim.PopItemWidth()
 
         # Pin selected nodes
-        if (psim.Button("Pin Selection")):
+        if (psim.Button("Pin Selected Vertex")):
             _pin_selected_nodes(state)
+        pinned_indices = sorted(state['ui_pinned_indices'])
+        if pinned_indices:
+            psim.SameLine()
+            if (psim.Button("Clear Selection")):
+                state['ui_pinned_indices'].clear()
+            psim.TextUnformatted("{}".format(pinned_indices))
 
         psim.TreePop()
 
@@ -90,8 +97,13 @@ def _initialize_system(state: dict):
     """
     Initialize the system with specified point mass and spring stiffness
     """
-    state['system'] = demo_systems.make_triangle_mesh_system(
-        state['mesh'], state['ui_point_mass'], state['ui_spring_stiffness'])
+    epsilon = state['ui_singular_values_epsilon']
+    singular_values_range = (1 - epsilon, 1 + epsilon)
+    state['system'] = demo_systems.make_triangle_mesh_strain_system(
+        state['mesh'],
+        state['ui_mass_matrix_scalar'],
+        singular_values_range,
+        state['ui_pinned_indices'])
 
 
 def _update_system(state: dict):
@@ -114,7 +126,7 @@ def _pin_selected_nodes(state: dict):
     ps_mesh, element_index = ps.get_selection()
 
     # And pin the corresponding vertex
-    state['system'].pinned.add(element_index)
+    state['ui_pinned_indices'].append(element_index)
 
 
 def edge(c):
@@ -130,19 +142,22 @@ def _initialize_polyscope_mesh(state: dict):
     Initialize the polyscope mesh to be a curve network where each edge corresponds to a spring in our system.
     """
     system = state['system']
-    edges = np.array([edge(c) for c in system.cons])
-    state['ps_mesh'] = ps.register_curve_network(
-        name='ps_mesh', nodes=system.q, edges=edges)
+    mesh = state['mesh']
+    state['ps_mesh'] = ps.register_surface_mesh(
+        name='ps_mesh',
+        vertices=mesh.points(),
+        faces=mesh.face_vertex_indices())
+    state['ps_mesh'].set_edge_width(1)
 
 
 def _update_polyscope_mesh(state: dict):
     """
     Update the polyscope curve network according to the current vertex positions of the system.
     """
-    state['ps_mesh'].update_node_positions(state['system'].q)
+    state['ps_mesh'].update_vertex_positions(state['system'].q)
 
 
-def main(filename: str):
+def main(args: argparse.Namespace):
     """
     Creates a Polyscope application visualizing a mass-spring system simulated using projective dynamics.
 
@@ -151,7 +166,7 @@ def main(filename: str):
     """
 
     # Read the mesh
-    mesh = om.read_trimesh(filename)
+    mesh = om.read_trimesh(args.filename)
 
     # Set the application name
     ps.set_program_name('Projective Dynamics Demo')
@@ -169,12 +184,14 @@ def main(filename: str):
     state = {
         'mesh': mesh,
         'system': None,
-        'ui_point_mass': 1,
-        'ui_spring_stiffness': 1,
+        'ui_mass_matrix_scalar': 1,
+        'ui_singular_values_epsilon': 0,
+        'ui_pinned_indices': [],
         'ps_mesh': None,
         'ui_is_running': False,
         'ui_h': 0.01,
-        'ui_steps_per_frame': 10
+        'ui_steps_per_frame': 10,
+        'record': args.record
     }
     # Initialize the system and polysope mesh
     _initialize_system(state)
@@ -200,11 +217,19 @@ if __name__ == '__main__':
                         help="the input mesh filename",
                         type=str)
 
+    # Optional argument to record the application screen
+    parser.add_argument("--record",
+                        help="whether or not to record the application screen",
+                        action="store_true")
+
     # Parse the command line arguments
     args = parser.parse_args()
 
-    # Pass the filename to our main function
-    main(args.filename)
-    subprocess.run(
-        f"mkdir -p ../demos/ &&ffmpeg -y -framerate 30 -pattern_type glob -i 'screenshot_*.png' -c:v libx264 -pix_fmt yuv420p ../demos/{os.path.basename(args.filename)}.mp4 && rm screenshot_*.png",
-        shell=True)
+    # Pass the args to our main function
+    main(args)
+
+    # Optionally record the application screen
+    if (args.record):
+        subprocess.run(
+            f"mkdir -p ../demos/ &&ffmpeg -y -framerate 30 -pattern_type glob -i 'screenshot_*.png' -c:v libx264 -pix_fmt yuv420p ../demos/{os.path.basename(args.filename)}.mp4 && rm screenshot_*.png",
+            shell=True)
